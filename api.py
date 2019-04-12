@@ -211,5 +211,35 @@ def get_appointments(shortid):
     else:
         return {}
 
+@app.route('/people/<shortid>/weblinks')
+def get_weblinks(shortid):
+    query = '''
+    PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX vivo:     <http://vivoweb.org/ontology/core#>
+    PREFIX blocal:   <http://vivo.brown.edu/ontology/vivo-brown/>
+    CONSTRUCT {{
+        ?web rdfs:label ?label .
+        ?web vivo:linkAnchorText ?text .
+        ?web vivo:rank ?rank .
+        ?web vivo:linkURI ?uri .
+    }}
+    WHERE
+    {{
+        <http://vivo.brown.edu/individual/{}> blocal:drrbWebPage ?web .
+        ?web rdfs:label ?label .
+        ?web vivo:linkAnchorText ?text .
+        ?web vivo:rank ?rank .
+        ?web vivo:linkURI ?uri .
+    }}
+    '''.format(shortid)
+    headers = {'Accept': 'application/json', 'charset':'utf-8'}
+    data = { 'email': user, 'password': passw, 'query': query }
+    resp = requests.post(queryUrl, data=data, headers=headers)
+    if resp.status_code == 200:
+        return jsonify(json.loads(resp.text))
+    else:
+        return {}
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
