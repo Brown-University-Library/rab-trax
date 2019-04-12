@@ -88,5 +88,87 @@ def people_index():
         time.sleep(5)
     return jsonify(out)
 
+@app.route('/people/<shortid>/describe')
+def get_person(shortid):
+    query = 'DESCRIBE <http://vivo.brown.edu/individual/{}>'.format(shortid)
+    headers = {'Accept': 'application/json', 'charset':'utf-8'}
+    data = { 'email': user, 'password': passw, 'query': query }
+    resp = requests.post(queryUrl, data=data, headers=headers)
+    if resp.status_code == 200:
+        return jsonify(json.loads(resp.text))
+    else:
+        return {}
+
+@app.route('/people/<shortid>/ras')
+def get_research_areas(shortid):
+    query = '''
+    PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX vivo:     <http://vivoweb.org/ontology/core#>
+    CONSTRUCT {{ ?ra rdfs:label ?name . }}
+    WHERE
+    {{
+        <http://vivo.brown.edu/individual/{}> vivo:hasResearchArea ?ra .
+        ?ra rdfs:label ?name .
+    }}
+    '''.format(shortid)
+    headers = {'Accept': 'application/json', 'charset':'utf-8'}
+    data = { 'email': user, 'password': passw, 'query': query }
+    resp = requests.post(queryUrl, data=data, headers=headers)
+    if resp.status_code == 200:
+        return jsonify(json.loads(resp.text))
+    else:
+        return {}
+
+@app.route('/people/<shortid>/appointments')
+def get_appointments(shortid):
+    query = '''
+    PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX vivo:     <http://vivoweb.org/ontology/core#>
+    PREFIX bprofile: <http://vivo.brown.edu/ontology/profile#>
+    CONSTRUCT {{
+        ?appt rdfs:label ?a_name .
+        ?appt bprofile:startDate ?start .
+        ?appt bprofile:endDate ?end .
+        ?appt bprofile:department ?dept .
+        ?appt bprofile:number ?number .
+        ?appt bprofile:country ?country .
+        ?appt bprofile:city ?city .
+        ?appt bprofile:state ?state .
+        ?appt bprofile:hasOrganization ?org.
+        ?org rdfs:label ?o_name .
+        ?appt bprofile:hasHospital ?hosp .
+        ?hosp rdfs:label ?h_name .
+        ?appt bprofile:hasSpecialty ?spec. 
+        ?spec rdfs:label ?s_name .
+    }}
+    WHERE
+    {{
+        <http://vivo.brown.edu/individual/{}> bprofile:hasAppointment ?appt .
+        ?appt rdfs:label ?a_name .
+        OPTIONAL {{ ?appt bprofile:startDate ?start . }}
+        OPTIONAL {{ ?appt bprofile:endDate ?end . }}
+        OPTIONAL {{ ?appt bprofile:department ?dept . }}
+        OPTIONAL {{ ?appt bprofile:number ?number . }}
+        OPTIONAL {{ ?appt bprofile:country ?country . }}
+        OPTIONAL {{ ?appt bprofile:city ?city . }}
+        OPTIONAL {{ ?appt bprofile:state ?state  . }}
+        OPTIONAL {{ ?appt bprofile:hasHospital ?hosp .
+            ?hosp rdfs:label ?h_name . }}
+        OPTIONAL {{ ?appt bprofile:hasOrganization ?org. 
+            ?org rdfs:label ?o_name . }}
+        OPTIONAL {{ ?appt bprofile:hasSpecialty ?spec. 
+            ?spec rdfs:label ?s_name . }}
+    }}
+    '''.format(shortid)
+    headers = {'Accept': 'application/json', 'charset':'utf-8'}
+    data = { 'email': user, 'password': passw, 'query': query }
+    resp = requests.post(queryUrl, data=data, headers=headers)
+    if resp.status_code == 200:
+        return jsonify(json.loads(resp.text))
+    else:
+        return {}
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
