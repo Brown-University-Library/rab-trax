@@ -88,8 +88,49 @@ def people_index():
         time.sleep(5)
     return jsonify(out)
 
-@app.route('/people/<shortid>/describe')
+@app.route('/people/<shortid>')
 def get_person(shortid):
+    query = '''
+    PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX vivo:     <http://vivoweb.org/ontology/core#>
+    PREFIX blocal:   <http://vivo.brown.edu/ontology/vivo-brown/>
+    CONSTRUCT {{
+        <http://vivo.brown.edu/individual/{0}> blocal:fullName ?full .
+        <http://vivo.brown.edu/individual/{0}> blocal:alphaName ?alpha .
+        <http://vivo.brown.edu/individual/{0}> blocal:affiliations ?affiliations .
+        <http://vivo.brown.edu/individual/{0}> blocal:awardsAndHonors ?awards .
+        <http://vivo.brown.edu/individual/{0}> blocal:fundedResarch ?funded .
+        <http://vivo.brown.edu/individual/{0}> blocal:researchStatement ?statement .
+        <http://vivo.brown.edu/individual/{0}> blocal:scholarlyWork ?scholarly .
+        <http://vivo.brown.edu/individual/{0}> vivo:overview ?over .
+        <http://vivo.brown.edu/individual/{0}> vivo:researchOverview ?res_over .
+        <http://vivo.brown.edu/individual/{0}> vivo:teachingOverview ?teach_over .
+    }}
+    WHERE
+    {{
+        <http://vivo.brown.edu/individual/{0}> blocal:fullName ?full .
+        <http://vivo.brown.edu/individual/{0}> blocal:alphaName ?alpha .
+        OPTIONAL {{ <http://vivo.brown.edu/individual/{0}> blocal:affiliations ?affiliations . }}
+        OPTIONAL {{ <http://vivo.brown.edu/individual/{0}> blocal:awardsAndHonors ?awards . }}
+        OPTIONAL {{ <http://vivo.brown.edu/individual/{0}> blocal:fundedResarch ?funded . }}
+        OPTIONAL {{ <http://vivo.brown.edu/individual/{0}> blocal:researchStatement ?statement . }}
+        OPTIONAL {{ <http://vivo.brown.edu/individual/{0}> blocal:scholarlyWork ?scholarly . }}
+        OPTIONAL {{ <http://vivo.brown.edu/individual/{0}> vivo:overview ?over . }}
+        OPTIONAL {{ <http://vivo.brown.edu/individual/{0}> vivo:researchOverview ?res_over . }}
+        OPTIONAL {{ <http://vivo.brown.edu/individual/{0}> vivo:teachingOverview ?teach_over . }}
+    }}
+    '''.format(shortid)
+    headers = {'Accept': 'application/json', 'charset':'utf-8'}
+    data = { 'email': user, 'password': passw, 'query': query }
+    resp = requests.post(queryUrl, data=data, headers=headers)
+    if resp.status_code == 200:
+        return jsonify(json.loads(resp.text))
+    else:
+        return {}
+
+@app.route('/people/<shortid>/describe')
+def describe_person(shortid):
     query = 'DESCRIBE <http://vivo.brown.edu/individual/{}>'.format(shortid)
     headers = {'Accept': 'application/json', 'charset':'utf-8'}
     data = { 'email': user, 'password': passw, 'query': query }
