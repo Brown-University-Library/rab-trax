@@ -19,6 +19,12 @@ updateUrl = os.environ['UPDATE']
 user = os.environ['USER']
 passw = os.environ['PASSW']
 
+def parse_data_property(jldObj, prop):
+    field = jldObj.get(prop, None)
+    if not field:
+        return ''
+    return field[0]['@value']
+
 def parse_JSON_string(stringData):
     jdata = json.loads(stringData)
     print(jdata)
@@ -211,6 +217,23 @@ def get_appointments(shortid):
     else:
         return {}
 
+def cast_weblink(jdata):
+    data = {}
+    data['rabid'] = jdata['@id']
+    data['link_text'] = parse_data_property(
+        jdata, 'http://vivoweb.org/ontology/core#linkAnchorText')
+    data['url'] = parse_data_property(
+        jdata, 'http://vivoweb.org/ontology/core#linkURI')
+    data['rank'] = parse_data_property(
+        jdata, 'http://vivoweb.org/ontology/core#rank')
+    return data
+
+def parse_weblink_data(jdata):
+    out = []
+    for j in jdata:
+        out.append(cast_weblink(j))
+    return out
+
 @app.route('/people/<shortid>/weblinks')
 def get_weblinks(shortid):
     query = '''
@@ -237,7 +260,8 @@ def get_weblinks(shortid):
     data = { 'email': user, 'password': passw, 'query': query }
     resp = requests.post(queryUrl, data=data, headers=headers)
     if resp.status_code == 200:
-        return jsonify(json.loads(resp.text))
+        parsed = parse_weblink_data(json.loads(resp.text))
+        return jsonify(parsed)
     else:
         return {}
 
