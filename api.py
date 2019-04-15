@@ -189,8 +189,11 @@ def parse_appt_data(jdata):
 @app.route('/people/<shortid>/appt_combined')
 def get_combined_appointment(shortid):
     data = {}
+    start = time.process_time()
     data['data'] = get_appointment_data(shortid)
     data['objs'] = get_appoinment_objects(shortid)
+    duration = time.process_time() - start
+    data['time'] = duration
     return jsonify(data)
 
 @app.route('/people/<shortid>/appt_data')
@@ -312,7 +315,12 @@ def get_appointments(shortid):
     data = { 'email': user, 'password': passw, 'query': query }
     resp = requests.post(queryUrl, data=data, headers=headers)
     if resp.status_code == 200:
-        return jsonify(json.loads(resp.text))
+        data = {}
+        start = time.process_time()
+        data['data'] = json.loads(resp.text)
+        duration = time.process_time() - start
+        data['time'] = duration
+        return jsonify(data)
     else:
         return {}
 
