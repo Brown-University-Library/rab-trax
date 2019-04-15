@@ -167,6 +167,105 @@ def get_research_areas(shortid):
     else:
         return {}
 
+def cast_appointment(jdata):
+    data = {}
+    data['rabid'] = jdata['@id']
+    data['name'] = parse_data_property(
+        jdata, 'http://www.w3.org/2000/01/rdf-schema#label')
+    data['hospital'] = parse_data_property(
+        jdata, 'http://vivoweb.org/ontology/core#linkAnchorText')
+    data['start'] = parse_data_property(
+        jdata, 'http://vivo.brown.edu/ontology/profile#startDate')
+    data['end'] = parse_data_property(
+        jdata, 'http://vivo.brown.edu/ontology/profile#endDate')
+    return data
+
+def parse_appt_data(jdata):
+    out = []
+    for j in jdata:
+        out.append(cast_appointment(j))
+    return out
+
+@app.route('/people/<shortid>/appt_combined')
+def get_combined_appointment(shortid):
+    data = {}
+    data['data'] = get_appointment_data(shortid)
+    data['objs'] = get_appoinment_objects(shortid)
+    return jsonify(data)
+
+@app.route('/people/<shortid>/appt_data')
+def get_appointment_data(shortid):
+    query = '''
+    PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX vivo:     <http://vivoweb.org/ontology/core#>
+    PREFIX bprofile: <http://vivo.brown.edu/ontology/profile#>
+    CONSTRUCT {{
+        ?appt rdfs:label ?a_name .
+        ?appt bprofile:startDate ?start .
+        ?appt bprofile:endDate ?end .
+        ?appt bprofile:department ?dept .
+        ?appt bprofile:number ?number .
+        ?appt bprofile:country ?country .
+        ?appt bprofile:city ?city .
+        ?appt bprofile:state ?state .
+    }}
+    WHERE
+    {{
+        <http://vivo.brown.edu/individual/{}> bprofile:hasAppointment ?appt .
+        ?appt rdfs:label ?a_name .
+        OPTIONAL {{ ?appt bprofile:startDate ?start . }}
+        OPTIONAL {{ ?appt bprofile:endDate ?end . }}
+        OPTIONAL {{ ?appt bprofile:department ?dept . }}
+        OPTIONAL {{ ?appt bprofile:number ?number . }}
+        OPTIONAL {{ ?appt bprofile:country ?country . }}
+        OPTIONAL {{ ?appt bprofile:city ?city . }}
+        OPTIONAL {{ ?appt bprofile:state ?state  . }}
+    }}
+    '''.format(shortid)
+    headers = {'Accept': 'application/json', 'charset':'utf-8'}
+    data = { 'email': user, 'password': passw, 'query': query }
+    resp = requests.post(queryUrl, data=data, headers=headers)
+    if resp.status_code == 200:
+        return json.loads(resp.text)
+    else:
+        return {}
+
+@app.route('/people/<shortid>/appt_objs')
+def get_appoinment_objects(shortid):
+    query = '''
+    PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX vivo:     <http://vivoweb.org/ontology/core#>
+    PREFIX bprofile: <http://vivo.brown.edu/ontology/profile#>
+    CONSTRUCT {{
+        ?obj rdfs:label ?name .
+    }}
+    WHERE
+    {{
+        {{
+            <http://vivo.brown.edu/individual/{0}> bprofile:hasAppointment ?appt .
+            ?appt bprofile:hasHospital ?obj .
+            ?obj rdfs:label ?name .
+        }} UNION {{
+            <http://vivo.brown.edu/individual/{0}> bprofile:hasOrganization ?appt .
+            ?appt bprofile:hasOrganization ?obj .
+            ?obj rdfs:label ?name .
+        }} UNION {{
+            <http://vivo.brown.edu/individual/{0}> bprofile:hasAppointment ?appt .
+            ?appt bprofile:hasSpecialty ?obj .
+            ?obj rdfs:label ?name .
+        }}
+    }}
+    '''.format(shortid)
+    headers = {'Accept': 'application/json', 'charset':'utf-8'}
+    data = { 'email': user, 'password': passw, 'query': query }
+    resp = requests.post(queryUrl, data=data, headers=headers)
+    if resp.status_code == 200:
+        return json.loads(resp.text)
+    else:
+        return {}
+
 @app.route('/people/<shortid>/appointments')
 def get_appointments(shortid):
     query = '''
