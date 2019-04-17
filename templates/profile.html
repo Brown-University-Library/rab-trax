@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Profile editor</title>
+  <script
+  src="https://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+  crossorigin="anonymous"></script>
+  <style>
+    textarea {
+      height: 350px;
+      width: 700px;
+    }
+  </style>
+</head>
+<body>
+  <h3>Overview<button id="edit-overview">Edit</button></h3>
+  <textarea id="overview" hidden></textarea>
+<script type="text/javascript">
+  var $edit_ovr, $ovr, shortid;
+
+  shortid = "{{ shortid }}";
+
+  $edit_ovr = $('#edit-overview');
+  $ovr = $('#overview');
+
+  $edit_ovr.on('click', function() {
+    $.ajax({
+      type: "GET",
+      dataType: "json",
+      url: `http://localhost:5000/people/${shortid}/overview`,
+      success: function( data ) {
+        $ovr.val( data );
+        $ovr.prop('hidden', false);
+      }
+    });
+  });
+</script>
+</body>
+</html>

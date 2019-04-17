@@ -3,7 +3,7 @@ import os
 import json
 import time
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
 import requests
 
 app = Flask(__name__)
@@ -134,6 +134,32 @@ def get_person(shortid):
         return jsonify(json.loads(resp.text))
     else:
         return {}
+
+@app.route('/people/<shortid>/overview')
+def get_overview(shortid):
+    query = '''
+    PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX vivo:     <http://vivoweb.org/ontology/core#>
+    PREFIX blocal:   <http://vivo.brown.edu/ontology/vivo-brown/>
+    CONSTRUCT {{
+        <http://vivo.brown.edu/individual/{0}> vivo:overview ?over .
+    }}
+    WHERE
+    {{
+        <http://vivo.brown.edu/individual/{0}> vivo:overview ?over .
+    }}
+    '''.format(shortid)
+    headers = {'Accept': 'application/json', 'charset':'utf-8'}
+    data = { 'email': user, 'password': passw, 'query': query }
+    resp = requests.post(queryUrl, data=data, headers=headers)
+    if resp.status_code == 200:
+        data = json.loads(resp.text)
+        return jsonify( parse_data_property(
+            data[0], 'http://vivoweb.org/ontology/core#overview'))
+    else:
+        return {}
+
 
 @app.route('/people/<shortid>/describe')
 def describe_person(shortid):
@@ -371,6 +397,10 @@ def get_weblinks(shortid):
         return jsonify(parsed)
     else:
         return {}
+
+@app.route('/profile/<shortid>')
+def profile_editor(shortid):
+    return render_template('profile.html', shortid=shortid)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
