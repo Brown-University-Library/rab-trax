@@ -16,6 +16,10 @@
 <body>
   <h3>Overview<button id="edit-overview">Edit</button></h3>
   <textarea id="overview" hidden></textarea>
+  <h3>Web links<button id="edit-links">Edit</button></h3>
+  <ul id="links">
+    <li id="link_template"><input class="url" type="text"><input class="link_text" type="text"></li>
+  </ul>
 <script type="text/javascript">
   var $edit_ovr, $ovr, shortid;
 
@@ -23,6 +27,10 @@
 
   $edit_ovr = $('#edit-overview');
   $ovr = $('#overview');
+  $edit_link = $('#edit-links');
+  $links = $('#links');
+  $link_tmpl = $('#link_template');
+  $link_tmpl.detach();
 
   $edit_ovr.on('click', function() {
     $.ajax({
@@ -32,6 +40,22 @@
       success: function( data ) {
         $ovr.val( data );
         $ovr.prop('hidden', false);
+      }
+    });
+  });
+
+  $edit_link.on('click', function() {
+    $.ajax({
+      type: "GET",
+      dataType: "json",
+      url: `http://localhost:5000/people/${shortid}/weblinks`,
+      success: function( data ) {
+        for (link of data) {
+          $link = $link_tmpl.clone();
+          $link.find('.url').val(link.url);
+          $link.find('.link_text').val(link.link_text);
+          $links.append($link);
+        }
       }
     });
   });
