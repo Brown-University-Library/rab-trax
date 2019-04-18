@@ -12,22 +12,14 @@
 <title></title>
 
 <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro" rel="stylesheet">
-<!-- 
+<link rel="stylesheet" media="all" href="{{ url_for('static', filename='stylesheets/bootstrap.css') }}" />
+<link rel="stylesheet" media="all" href="{{ url_for('static', filename='stylesheets/bootstrap-theme.css') }}" />
 <link rel="stylesheet" media="all" href="{{ url_for('static', filename='stylesheets/application.css') }}" />
-<link rel="stylesheet" media="all" href="{{ url_for('static', filename='stylesheets/application.css') }}" />
-<link rel="stylesheet" media="all" href="{{ url_for('static', filename='stylesheets/application.css') }}" /> -->
-<link rel="stylesheet" media="all" href="../static/stylesheets/bootstrap.css" />
-<link rel="stylesheet" media="all" href="../static/stylesheets/bootstrap-theme.css" />
-<link rel="stylesheet" media="all" href="../static/stylesheets/application.css" />
-<!-- <link rel="stylesheet" media="all" href="../static/stylesheets/theme.css" /> -->
-<link rel="stylesheet" media="all" href="../static/stylesheets/homepage.css" />
-<link rel="stylesheet" media="all" href="../static/stylesheets/individual.css" />
-<script src="../static/javascripts/jquery.js"></script>
-<script src="../static/javascripts/bootstrap.js"></script>
-<script src="../static/javascripts/application.js"></script>
-<!-- <script src="{{ url_for('static', filename='javascripts/jquery.js') }"></script>
-<script src="{{ url_for('static', filename='javascripts/bootstrap.js') }"></script>
-<script src="{{ url_for('static', filename='javascripts/application.js') }"></script> -->
+<link rel="stylesheet" media="all" href="{{ url_for('static', filename='stylesheets/homepage.css') }}" />
+<link rel="stylesheet" media="all" href="{{ url_for('static', filename='stylesheets/individual.css') }}" />
+<script src="{{ url_for('static', filename='javascripts/jquery.js') }}"></script>
+<script src="{{ url_for('static', filename='javascripts/bootstrap.js') }}"></script>
+<script src="{{ url_for('static', filename='javascripts/application.js') }}"></script>
 </head>
 
 <body class="no-logo fae">
@@ -222,14 +214,12 @@
         <img alt="Faculty Picture" width="175" class="img-circle" src="https://vivo.brown.edu/profile-images/162/74/eshih1_photo_.jpg" />
       </div>
       <h2 class="hidden-sm hidden-md hidden-lg">
-          Elena Shih
       </h2>
 
       <!-- Contact Info -->
       <div class="emailsContainer">
-          <a href="mailto:Elena_Shih@brown.edu" title="Email Elena_Shih@brown.edu">
+          <a href="mailto:Elena_Shih@brown.edu" title="Email {{ name }}">
             <span class="glyphicon glyphicon-envelope" aria-hidden="true"></span>
-            <span class="sr-only" aria-hidden="true">title="Email Elena_Shih@brown.edu</span>
           </a>
       </div>
 
@@ -300,7 +290,7 @@
             </a>
 
             <a class="btn btn-default"
-              href="http://vivo.brown.edu/docs/e/eshih1_cv.pdf?dt=074810101"
+              href=""
               target="_blank"
               title="Curriculum Vitae">Curriculum Vitae [PDF]</a>
       </div>
@@ -310,203 +300,30 @@
 </div>
 
       <div class="col-md-9 col-sm-8 col-xs-12" id="section_overview">
-  <h2 class="vcard foaf-person individual_overview hidden-xs">Elena Shih</h2>
-  <h3 class="individual_overview">Assistant Professor of American Studies</h3>
+  <h2 class="vcard foaf-person individual_overview hidden-xs">{{shortid}}</h2>
+  <h3 class="individual_overview"></h3>
 
   <div class="tabFinder" id="tabOverview">
     <h3>Overview</h3>
-<!--     <p><p>Elena Shih is an Assistant Professor of American Studies and Ethnic Studies, and Faculty Affiliate in the Department of Sociology and Watson Institute for International Studies. Shih's current book project, "Manufacturing Freedom: Rescue, Rehabilitation, and the Slave Free Good" (under contract with University of California Press), is a global ethnography of the transnational social movement to combat human trafficking in China, Thailand, and the United States. Shih teaches courses on human trafficking, labor migration and sex work, social enterprise, East and Southeast Asian borderlands, critical humanitarianism studies, and ethnographic methods.</p>
-
-<p>As a Faculty Fellow at the Center for the Study of Slavery and Justice, Shih leads an interdisciplinary human trafficking research cluster directing projects in three areas: (1) Race and Modern Day Abolition; (2) Policing Sex Worker Rights; (3) Worker Voice in Global Supply Chains.</p>
-
-<p>Shih is a former visiting faculty fellowship at Yale University's Gilder Lehrman Center for the Study of Slavery, Resistance, and Abolition, where she is a member of the Human Trafficking working group (2017-2019).</p>
-
-<p>Shih serves on the editorial boards for <em>The Anti-Trafficking Review, </em>a peer-reviewed journal of the Global Alliance to Combat Traffic in Women, and <em>openDemocracy's Beyond Trafficking and Slavery</em> op-ed platform. Shih earned a PhD in Sociology from UCLA, and BA in Asian Studies and Women's Studies from Pomona College.</p></p> -->
+    <p></p>
 
       <h4 class="brown-affiliations panel-heading">Brown Affiliations</h4>
       <div class="brown-affiliations-list">
-          <p>
-          <img alt="American Studies logo" width="36" src="https://vivo.brown.edu/profile-images/779/7/am_studies.jpg" />
-          <a href="https://vivo.brown.edu/display/org-brown-univ-dept3">
-            American Studies
-          </a>
-          </p>
       </div>
 
       <h4 class="research-areas panel-heading">Research Areas</h4>
       <div class="brown-research-areas-list">
-          <a href="https://vivo.brown.edu/search?fq=research_areas|China">
-            China
-          </a>
-            &nbsp;|&nbsp;
-          <a href="https://vivo.brown.edu/search?fq=research_areas|Critical+Humanitarianism">
-            Critical Humanitarianism
-          </a>
-            &nbsp;|&nbsp;
-          <a href="https://vivo.brown.edu/search?fq=research_areas|East+Asia">
-            East Asia
-          </a>
-            &nbsp;|&nbsp;
-          <a href="https://vivo.brown.edu/search?fq=research_areas|gender+and+sexuality+studies">
-            gender and sexuality studies
-          </a>
-            &nbsp;|&nbsp;
-          <a href="https://vivo.brown.edu/search?fq=research_areas|Global+Ethnography">
-            Global Ethnography
-          </a>
-            &nbsp;|&nbsp;
-          <a href="https://vivo.brown.edu/search?fq=research_areas|Human+Trafficking">
-            Human Trafficking
-          </a>
-            &nbsp;|&nbsp;
-          <a href="https://vivo.brown.edu/search?fq=research_areas|Labor+in+the+Global+South">
-            Labor in the Global South
-          </a>
-            &nbsp;|&nbsp;
-          <a href="https://vivo.brown.edu/search?fq=research_areas|Myanmar">
-            Myanmar
-          </a>
-            &nbsp;|&nbsp;
-          <a href="https://vivo.brown.edu/search?fq=research_areas|Social+Entrepreneurship">
-            Social Entrepreneurship
-          </a>
-            &nbsp;|&nbsp;
-          <a href="https://vivo.brown.edu/search?fq=research_areas|Southeast+Asia">
-            Southeast Asia
-          </a>
-            &nbsp;|&nbsp;
-          <a href="https://vivo.brown.edu/search?fq=research_areas|Thailand">
-            Thailand
-          </a>
       </div>
 
       <h4 class="research-areas panel-heading">On the Web</h4>
       <div class="brown-research-areas-list">
-            <span class="glyphicon glyphicon-link" aria-hidden="true"></span>
-          <a href="http://www.elenashih.org" target="_blank">Personal Website</a><br/>
+<!--             <span class="glyphicon glyphicon-link" aria-hidden="true"></span>
+          <a href="http://www.elenashih.org" target="_blank">Personal Website</a><br/> -->
       </div>
      <!-- on_the_web.count -->
     <br/><br/>
   </div> <!-- panel -->
 
-    <div id="tabPublications" class="panel panel-default hidden">
-    <h3 style="padding-bottom: 21px;">Publications
-      <a id="viz_coauthor" class="btn btn-default hidden" style="float:right;"
-        href="/display/eshih1/viz/coauthor" target="_blank"
-        title="Visualize coauthors network">Visualize it&nbsp;
-        <i style="color:rgb(232, 217, 139);" class="glyphicon glyphicon-signal"></i>
-      </a>
-    </h3>
-
-    <div class="panel-body">
-          <div class="btn-group" role="group" aria-label="filter contributor to by">
-              <button type="button" class="btn btn-default active btn-filter-pub"
-                id="btn-for_all"
-                onclick="javascript:publicationsShowAll()">View All (9)
-              </button>
-              <button type="button" class="btn btn-default btn-filter-pub "
-                id="btn-for__article"
-                onclick="javascript:publicationsShowOnly('_article')"> Article (6)</button>
-              <button type="button" class="btn btn-default btn-filter-pub "
-                id="btn-for__other"
-                onclick="javascript:publicationsShowOnly('_other')"> Other (3)</button>
-          </div>
-      <table class="table table-hover">
-        <tbody>
-            <tr class="publicationTableRow" role="listitem">
-              <td class="citation-data pub-item pub-type__article">
-                <span class="listDateTime">Shih, Elena</span>
-                <i>Duplicitous Freedom: Moral and Material Care Work in Anti-Trafficking Rescue and Rehabilitation.</i>
-                Critical Sociology. 2018; 44(7–8) : 1077–1086. 
-                <div class="no-orphans">
-                    <a class="pub-item-tag full-text-link" target = "_blank" href="https://doi.org/https://doi.org/10.1177/0896920517751589">Full Text</a>
-                </div>
-              </td>
-            </tr>
-            <tr class="publicationTableRow" role="listitem">
-              <td class="citation-data pub-item pub-type__other">
-                <span class="listDateTime">Shih, Elena</span>
-                <i>Duplicitous Freedom: Moral and Material Care Work in Anti-Trafficking Rescue and Rehabilitation.</i>
-                Critical Sociology/Critical Sociology. 2018; 44 (7-8) : 1077-1086. 
-                <div class="no-orphans">
-                    <a class="pub-item-tag full-text-link" target = "_blank" href="https://doi.org/10.1177/0896920517751589">Full Text</a>
-                </div>
-              </td>
-            </tr>
-            <tr class="publicationTableRow" role="listitem">
-              <td class="citation-data pub-item pub-type__other">
-                <span class="listDateTime">Shih, Elena</span>
-                <i>Occupational Hazards: Sex, Business, and HIV in Post-Mao ChinaOccupational Hazards: Sex, Business, and HIV in Post-Mao China, by UretskyElanah. Stanford, CA: Stanford University Press, 2016. 262 pp. &#36;25.95 paper. ISBN: 9780804 797535..</i>
-                Contemporary Sociology: A Journal of Reviews/Contemporary Sociology: A Journal of Reviews. 2018; 47 (2) : 232-233. 
-                <div class="no-orphans">
-                    <a class="pub-item-tag full-text-link" target = "_blank" href="https://doi.org/10.1177/0094306118755396qq">Full Text</a>
-                </div>
-              </td>
-            </tr>
-            <tr class="publicationTableRow" role="listitem">
-              <td class="citation-data pub-item pub-type__other">
-                <span class="listDateTime">Shih, Elena</span>
-                <i>Freedom Markets: Consumption and Commerce across Human-Trafficking Rescue in Thailand.</i>
-                positions/positions. 2017; 25 (4) : 769-794. 
-                <div class="no-orphans">
-                    <a class="pub-item-tag full-text-link" target = "_blank" href="https://doi.org/10.1215/10679847-4188410">Full Text</a>
-                </div>
-              </td>
-            </tr>
-            <tr class="publicationTableRow" role="listitem">
-              <td class="citation-data pub-item pub-type__article">
-                <span class="listDateTime">Shih, E.</span>
-                <i>Not in My "Backyard Abolitionism": Vigilante Rescue against American Sex Trafficking.</i>
-                Sociological Perspectives/Sociological Perspectives. 2016; 59 (1) : 66-90. 
-                <div class="no-orphans">
-                    <a class="pub-item-tag full-text-link" target = "_blank" href="https://doi.org/10.1177/0731121416628551">Full Text</a>
-                </div>
-              </td>
-            </tr>
-            <tr class="publicationTableRow" role="listitem">
-              <td class="citation-data pub-item pub-type__article">
-                <span class="listDateTime">Shih, E.</span>
-                <i>Life Interrupted: Trafficking into Forced Labor in the United States.</i>
-                Contemporary Sociology: A Journal of Reviews. 2015; 44 (6) : 780-782. 
-                <div class="no-orphans">
-                    <a class="pub-item-tag full-text-link" target = "_blank" href="https://doi.org/10.1177/0094306115609925d">Full Text</a>
-                </div>
-              </td>
-            </tr>
-            <tr class="publicationTableRow" role="listitem">
-              <td class="citation-data pub-item pub-type__article">
-                <span class="listDateTime">Elizabeth Bernstein, Elena Shih</span>
-                <i>The Erotics of Authenticity: Sex Trafficking and ‘Reality Tourism’ in Thailand.</i>
-                Social Politics. 2014; 21 (3) : 430-460. 
-                <div class="no-orphans">
-                    <a class="pub-item-tag full-text-link" target = "_blank" href="https://doi.org/10.1093/sp/jxu022">Full Text</a>
-                </div>
-              </td>
-            </tr>
-            <tr class="publicationTableRow" role="listitem">
-              <td class="citation-data pub-item pub-type__article">
-                <span class="listDateTime">Elena Shih</span>
-                <i>“The Anti-Trafficking Rehabilitation Complex" .</i>
-                Contexts. 2014; 13 (1) 
-                <div class="no-orphans">
-                    <a class="pub-item-tag full-text-link" target = "_blank" href="http://contexts.org/articles/selling-people/#shih">More Info</a>
-                </div>
-              </td>
-            </tr>
-            <tr class="publicationTableRow" role="listitem">
-              <td class="citation-data pub-item pub-type__article">
-                <span class="listDateTime">Elena Shih</span>
-                <i>Health and Rights at the Margins: Human Trafficking and HIV/AIDS Amongst Jingpo Ethnic Communities in Ruili City, China.</i>
-                The Anti-Trafficking Review. 2013; 2 
-                <div class="no-orphans">
-                    <a class="pub-item-tag full-text-link" target = "_blank" href="https://doi.org/10.14197/atr.20121327">Full Text</a>
-                </div>
-              </td>
-            </tr>
-        </tbody>
-      </table>
-    </div> <!-- panel-body -->
-  </div> <!-- panel -->
 
     <div id="tabResearch" class="panel panel-default hidden">
     <h3>Research</h3>
@@ -517,17 +334,7 @@
 
   <div class="panel-body">
     <div class="property-list" role="list" id="relatedBy-Authorship-List" displaylimit="5">
-      <p><strong><em><u>The Anti-Trafficking Rehabilitation Complex</u></em></strong></p>
 
-<p>My book manuscript in progress, <strong>"Manufacturing Freedom: Rescue, Rehabilitation and the Slave Free Good,"</strong> is a multi-sited and global ethnography based off 40 months of fieldwork on efforts to combat human trafficking in Beijing, Bangkok and Los Angeles. Drawing on fieldwork as a participant action researcher with faith-based and secular social movement organizations--ranging from grassroots evangelical Christian missionary projects, to sex worker rights cooperatives, to the United Nations Inter-Agency Project on Human Trafficking--this book explores the mobilization of rights and morality in between the state and the market in the contemporary movement against human trafficking.</p>
-
-<p>This work is inspired by transnational feminist scholarship, and brings these frameworks to bear on political and economic sociology. Concerned with hierarchies of race, class, and gendered inequality between social movement actors in the Global North and their alleged subjects in the Global South, the dissertation argues that despite obvious differences across political economic regimes and ideological orientations of anti-trafficking movement organizations, contemporary anti-trafficking efforts reproduce women's global subordination at both the discursive and labor process levels. This research is pivotal for understanding how transnational social movements are successful according to their stated objectives and for people they intend to serve.</p>
-
-<p><em><u><strong>Ethnicity and Global Capital on the China-Burma Border</strong></u></em></p>
-
-<p>My ongoing second research project is interested in the effects of China’s booming global economic progress on young ethnic minority people living on the China-Burma border. Ethnic minority communities in Ruili City, Yunnan Province are geographically and ethnically disenfranchised due to their isolation from China’s economic hubs and state policies that offer structural benefits and systemic advantages for Han majority citizens. Due to its location just above the Golden Triangle, linking opium-producing areas in Vietnam, Laos, Thailand and Myanmar, Ruili was an ideal entry point for heroin distribution through China to other parts of the world. Lacking economic opportunities for income generation, many ethnic minority persons in Yunnan turned to the illegal heroin trade and were often paid in the heroin they trafficked. Concurrently, a public health crisis emerged in 1989, when Ruili was documented as the city where the first cases of HIV were discovered in China. The effects of intravenous drug use, incarceration, and outward migration have been most heavily experienced but Ruili’s “left behind youth.”</p>
-
-<p>My research is interested in the paradoxically parallel tracks of capital investment and ethnic conflict in the area, and how these impact youth living across these borderlands. In 2006, the United Nations initiated a global capital investment campaign to fund a multi-billion dollar railway project linking China and Southeast Asia. This infrastructural project has brought new money and new mobility into ethnic minority communities on the China-Burma border. Through my teaching, ongoing public humanities projects, and further research, this second project will look at the shifting meanings of ethnic identity in the face of global expansion and connectivity. Understood within a transnational Ethnic Studies framework, I hope this project contributes to the transnationalization of American Studies through its exploration of how race and ethnicity are mobilized and understood in global contexts—and specifically global contexts that are tied to the US through capital, infrastructural, and geopolitical investments.</p>
     </div>
   </div>
 
@@ -537,11 +344,7 @@
 
   <div class="panel-body">
     <div class="property-list" role="list" id="relatedBy-Authorship-List" displaylimit="5">
-      <p><u><strong><em>Community Action Research: Policing Modern Day Slavery in Rhode Island</em></strong></u></p>
 
-<p>As a Faculty Fellow at Brown’s <a href="https://www.brown.edu/initiatives/slavery-and-justice/people/faculty-fellows"><em>Center for the Study of Slavery and Justice,</em></a> I direct a human trafficking research cluster that organizes programming to attract interdisciplinary interest and to increase collaborative critical inquiry into the study of human trafficking. This includes organizing a monthly visitor speaker series, planning an annual day-long conference held each Spring, and leading undergraduate and graduate students through community based research projects related to human trafficking.</p>
-
-<p>We currently have one collaborative research project underway. “<em>Policing Modern Day Slavery: Sex Work and Exploitation in Rhode Island,”</em> is a community based research partnership with Gina Robinson, Executive Director of <em><a href="http://coyoteri.org/wp/coyote-strategies/">COYOTE Rhode Island</a>,</em> the state’s first sex worker rights organization. Prior to 2009, Rhode Island was one of just two states in the US to have legalized indoor prostitution, and in 2009, due to heightened pressure from anti-trafficking advocacy groups, the state re-criminalized prostitution in the name of protecting victims of sex trafficking. Rhode Island provides a unique test case to interrogate the efficacy of legal initiatives to combat modern day slavery within the frameworks of labor exploitation, critical modern day slavery studies, and carceral feminism. This study takes race, class, and policing seriously in its interrogation of efforts to combat modern day slavery and asks: how have contemporary anti-trafficking efforts generated new forms of policing, how do they build off existing policing of racial minority and immigrant communities, and how has re-criminalization impacted the levels of violence and exploitation that sex workers experience? </p>
     </div>
   </div>
 
@@ -551,33 +354,7 @@
 
   <div class="panel-body">
     <div class="property-list" role="list" id="relatedBy-Authorship-List" displaylimit="5">
-      <p><strong>EXTERNAL MAJOR GRANTS</strong></p>
 
-<p>2017-2018       <strong>British Academy, </strong>Tackling Human Trafficking and Forced Labour in Modern Business, w/ Co-PI Issara Institute, Bangkok Thailand  </p>
-
-<p>2015-2016       <strong>American Sociological Association, </strong>Community Action Research Initiative Spivak Research Grant, w/ COYOTE RI</p>
-
-<p>2013-2014       <strong>Ford Foundation</strong>, Doctoral Dissertation Fellowship          </p>
-
-<p>2013-2014       <strong>American Sociological Association </strong>and<strong> Sociologists for Women in Society</strong>, Minority Fellows Program Fellow (Cohort 40)</p>
-
-<p>2010-2011       <strong>Social Science Research Council</strong>, Dissertation Proposal Development Fellowship, Field: <em>Contentious Politics</em></p>
-
-<p>2008-2009       <strong>US Dept. of Education</strong><em>, </em>Foreign Language Area Studies Fellowship, Vietnamese</p>
-
-<p>2007-2008       <strong>US Dept. of Education</strong>, Foreign Language Area Studies Fellowship, Mandarin</p>
-
-<p>2004-2005       <strong>Fulbright Fellowship</strong>, Beijing University, People’s Republic of China (PRC)</p>
-
-<p>2003                <strong>Freeman Asia Foundation</strong>, Summer Research Grant</p>
-
-<p><strong>INTERNAL GRANTS</strong></p>
-
-<p>2015                <strong>Brown University China Initiative</strong>, Faculty Collaboration Grant (&#36;15,000)</p>
-
-<p>2014                <strong>Brown University UTRA</strong>, “The Art of Protest in Hong Kong’s Umbrella Movement,” Mabel Fung (‘15); “Labor as Social Control: The Implications of Gendered and Racialized Vocational Training for Incarcerated and Formerly Incarcerated Women,” Rheem Brooks (’16); “Racial Legacies of Human Trafficking in Brazil,” Eve Woldamikeal (’16)</p>
-
-<p>2013                <strong>UC Global Health Institute</strong>, Project Grant (Women’s Health and Empowerment)</p>
     </div>
   </div>
 
@@ -587,41 +364,9 @@
 
   <div class="panel-body">
     <div class="property-list" role="list" id="relatedBy-Authorship-List" displaylimit="5">
-      <p><strong>Public Work: [openDemocracy <em>Beyond Trafficking and Slavery Op-ed Platform]</em></strong></p>
-
-<p>January 2017. (w/ Joel Quirk). <a href="https://www.opendemocracy.net/beyondslavery/joel-quirk-elena-shih/introduction-do-hidden-costs-outweigh-practical-benefits-of-huma">"Human Trafficking Awareness Campaigns: Do the Hidden Costs Outweigh the Practical Benefits." 10 Part Global Policy Debate </a></p>
-
-<p>December 2015. <a href="https://www.opendemocracy.net/beyondslavery/elena-shih/antitrafficking-rehabilitation-complex-commodity-activism-and-slavefree-goo">"The Anti-Trafficking Rehabilitation Complex: Commodity Activism and Slave Free Goods" </a></p>
-
-<p><strong>Selected Presentations</strong></p>
-
-<p>"Free Market Evangelism: Political Economies of Religion and Secularism in Modern Day Abolition," <em><strong>The Mission of Development: Religion and Techno-Politics in Asia,</strong></em> National University of Singapore, Asia Research Institute, December 2015.</p>
-
-<p>"Pricing Good Work: Sexual Humanitarianism in Vocational Training," <em><strong>Representing Sexual Humanitarianism</strong></em>, University of Aix-Marseille, September 2015.</p>
-
-<p>“The Anti-Trafficking Rehabilitation Complex.” <strong>American Sociological Association Section on Sexualities, </strong><em>Invited Session on Sexual Regulation,</em> Chicago, IL August 2015.</p>
-
-<p>“The Price of Freedom: Moral and Political Economies of the Global Anti-Trafficking Movement.” <strong>Sexualities Project at Northwestern, </strong>"Remapping the Erotic: Changing Contours in Studies of Sexualities, Identities, and Social Regulation (April 23-24, 2015)</p>
-
-<p>“The Price of Freedom: Political Economies of Anti-Trafficking Rescue in China and Thailand.” American Sociological Association, Sociology of Development Conference, <em><strong>Gender, Politics and Development Panel</strong></em>, March 2015.</p>
-
-<p>“Art and Ethnicity at the Margins: Public Arts Education on the China-Burma Border,” Umbrella Movement: Forum on Arts and Activism, <em><strong>On Arts and Activism Panel</strong></em><em>,</em> Chinese University of Hong Kong, January 2015.</p>
-
-<p><strong>“</strong>Sex and Labor Trafficking: China and Thailand Compared,” Chinese Academy of Social Sciences, <em><strong>Chinese Academy of Work and Labor Annual Conference</strong></em><strong>, </strong>January 2015.</p>
-
-<p>‘Not in My Backyard’: Carceral Vigilantism Outside the State in the Anti-Human Trafficking Movement.” <strong>American Studies Association</strong>, Panel on <em>Global Strategies for Sexual Justice, </em>Los Angeles, CA November 2014.</p>
-
-<p>“Free Market Evangelism: Political Economies of Secular and Religious Power in Modern Day Abolitionist Approaches to Combatting Human Trafficking.” <strong>National Women’s</strong> <strong>Studies Association</strong>, Cincinnati, OH, November 2013.</p>
-
-<p>“The Political Economy of Human Trafficking Rescue in Thailand’s Commercial Sex Industry.”<strong> Council on Thai Studies</strong>, Panel on <em>Economies</em>, Northern Illinois University, DeKalb, IL, October 2013.</p>
-
-<p>“Health and Rights at the Margins: Human Trafficking and HIV/AIDS Amongst Jingpo Ethnic Communities in Ruili City, China.”  <strong>People’s Global Action on Migration, </strong><strong>Development, and Human Rights, </strong><em>UN High Level Dialogue on Migration & </em><em>Development,</em> New York, NY, September 2013.</p>
-
-<p>“Discourse Masters and Lyrical Slaves: Authoritarianism Meets Transnational Politics in China’s Response to Labor Trafficking.” <strong>American Sociological Association,</strong> Labor and Labor Movements Conference on <em>Labor and Global Solidarity</em>, New York, NY, August 2013.</p>
+ 
     </div>
   </div>
-
-
   </div>
 
     <div id="tabBackground" class="panel panel-default hidden">
@@ -641,47 +386,10 @@
                 </tr>
                   <tr class="tableRow" role="listitem">
                     <td class="citation-data">
-                      <span class="listDateTime">2015</span>
                     </td>
                     <td>
-                      <span class="listDateTime">PhD</span>
                     </td>
                     <td>
-                      <span class="listDateTime">
-                        <a href="https://vivo.brown.edu/search?q=alumni_of:&quot;University+of+California%2C+Los+Angeles&quot;"
-                          title="Find researchers that also graduated from this institution">
-                          University of California, Los Angeles</a>
-                      </span>
-                    </td>
-                  </tr>
-                  <tr class="tableRow" role="listitem">
-                    <td class="citation-data">
-                      <span class="listDateTime">2009</span>
-                    </td>
-                    <td>
-                      <span class="listDateTime">MA</span>
-                    </td>
-                    <td>
-                      <span class="listDateTime">
-                        <a href="https://vivo.brown.edu/search?q=alumni_of:&quot;University+of+California%2C+Los+Angeles&quot;"
-                          title="Find researchers that also graduated from this institution">
-                          University of California, Los Angeles</a>
-                      </span>
-                    </td>
-                  </tr>
-                  <tr class="tableRow" role="listitem">
-                    <td class="citation-data">
-                      <span class="listDateTime">2004</span>
-                    </td>
-                    <td>
-                      <span class="listDateTime">BA</span>
-                    </td>
-                    <td>
-                      <span class="listDateTime">
-                        <a href="https://vivo.brown.edu/search?q=alumni_of:&quot;Pomona+College&quot;"
-                          title="Find researchers that also graduated from this institution">
-                          Pomona College</a>
-                      </span>
                     </td>
                   </tr>
               </tbody>
@@ -696,10 +404,8 @@
             <table class="table table-hover">
               <tbody>
                   <tr class="tableRow" role="listitem">
-                    <td>Watson Institute Postdoctoral Fellow in International Studies</td>
-                    <!-- TODO: should we render the org_full_name components as individual hyperlinks? -->
                     <td></td>
-                    <td>2014-2015</td>
+                    <td></td>
                     <td></td>
                   </tr>
               </tbody>
@@ -712,25 +418,6 @@
 
   <div class="panel-body">
     <div class="property-list" role="list" id="relatedBy-Authorship-List" displaylimit="5">
-      <p>2018: ACLS Luce Fellowship in China Studies</p>
-
-<p>2018: Durham University, Institute for Advanced Studies, Faculty Fellow in "Abolitionist Industrial Complexes"</p>
-
-<p>2017: British Academy, Tackling Human Trafficking and Forced Labour in Modern Business, w/ Co-PI Issara Institute, Bangkok Thailand  </p>
-
-<p>2016: Yale University Gilder Lehrman Center for the Study of Slavery, Resistance, and Abolition, Faculty Fellow</p>
-
-<p>2015-2018: Brown University Center for the Study of Slavery and Justice, Faculty Fellow</p>
-
-<p>2014-2015: Brown University Watson Institute for International Studies, Postdoctoral Fellow</p>
-
-<p>2014: Ford Foundation Dissertation Fellow</p>
-
-<p>2014: American Sociological Association Minority Fellowship Program Fellow</p>
-
-<p>2010: Social Science Research Council, Dissertation Proposal Development Fellow</p>
-
-<p>2004: Fulbright Fellow (China)</p>
     </div>
   </div>
 
@@ -739,11 +426,6 @@
 
     <div id="tabAffiliations" class="panel panel-default hidden">
     <h3 style="padding-bottom: 21px;">Affiliations
-      <a id="viz_collab" class="btn btn-default hidden" style="float:right;"
-        href="/display/eshih1/viz/collab" target="_blank"
-        title="Visualize collaborators network">Visualize it&nbsp;
-        <i style="color:rgb(232, 217, 139);" class="glyphicon glyphicon-signal"></i>
-      </a>
     </h3>
 
           <div class="panel-heading">
@@ -759,22 +441,8 @@
                 </tr>
                   <tr class="tableRow" role="listitem">
                     <td>
-                      <span class="listDateTime">
-                        <a href="https://vivo.brown.edu/display/kclaborn">Claborn, Kasey</a>
-                      </span>
                     </td>
                     <td>
-                      <span class="listDateTime">Adjunct Assistant Professor of Medicine</span>
-                    </td>
-                  </tr>
-                  <tr class="tableRow" role="listitem">
-                    <td>
-                      <span class="listDateTime">
-                        <a href="https://vivo.brown.edu/display/eowens1">Owens, Emily</a>
-                      </span>
-                    </td>
-                    <td>
-                      <span class="listDateTime">Assistant Professor of History</span>
                     </td>
                   </tr>
               </tbody>
@@ -787,7 +455,6 @@
 
   <div class="panel-body">
     <div class="property-list" role="list" id="relatedBy-Authorship-List" displaylimit="5">
-      <p>American Sociological Association (Sections on Sex and Gender, Asia / Asian America, Sexualities, Labor and Labor Movements, Global and Transnational Sociology, Human Rights); American Studies Association; Sociologists for Women in Society; Social Science History Association (Section on Women, Gender and Sexuality); Association for Asian Studies; Association for Asian American Studies; National Women’s Studies Association; Council on Thai Studies</p>
     </div>
   </div>
 
@@ -803,20 +470,9 @@
   </div>
 
   <div class="panel-body">
-<!--     <div class="property-list" role="list" id="relatedBy-Authorship-List" displaylimit="5">
-      <p><strong>Critial Approaches to Global Humanitarianism in Thailand</strong></p>
-
-<p>This January 2017 Wintersession course will explore three dimensions of market-based solutions to global humanitarian problems in Thailand, ultimately interested in benefits, opportunities, constraints, and/or unintended consequences that global humanitarianism may have. Students will spend one week of intensive study in Providence reading literature on the political economy of development in Thailand, as well as scholarship on critical humanitarianism and industrial complexes around the world. Weeks 2 and 3 will take place in Thailand, first in Bangkok, where students acclimate to life in the capital city, and next in Chiang Mai, where students explore life in a smaller city close to the Burmese border, which is still a hub for different forms of global activism.</p>
-
-<p><strong>Human Trafficking and Humanitarian Industrial Complexes </strong></p>
-
-<p>My Spring 2016 lecture class “The Anti-Trafficking Savior Complex: Saints, Sinners and Modern Day Slavery,” will culminate in a public conversation between Teju Cole on the "White Savior Industrial Complex" and Carol Leigh on the "Anti-Trafficking Industrial Complex." Modern-Day Abolitionism has been critiqued for creating a human trafficking “rescue industry” (Agustín 2007) and my research argues that prior critiques fail to interrogate race and power inequalities across various anti-trafficking projects. Rather than focus on <em>victims </em>of human trafficking as prevalent accounts tend to do, this course de-centers anti-trafficking narratives by focusing on <em>saviors,</em> and how the intersections of race, class, gender, and nation privilege and power undergird in contemporary humanitarian efforts.<em> </em>The course cover a variety of intersectional concepts ranging from: rehabilitation regimes of labor training, sexual humanitarianism, carceral feminism, ethical consumption, the non-profit, and prison industrial complexes.</p>
-
-<p><strong>Transnational Public Humanities Praxis: Ethnicity and Art in China-Burma Borderlands</strong></p>
-
-<p>My Fall 2015 course on “Global China: Forces, Flows, and Frictions” focused on how economic modernization, ethnic disenfranchisement, heroin trafficking, outward migration, and HIV epidemic converge on the lives of youth living on the China-Burma border. The final class project was an exhibition of youth artwork produced by the <a href="http://www.theborderartsproject.org/02/Info.html"><em>Songzha Art Project, </em></a>a community-based arts organization that offers no-cost public art education to ethnic minority youth living in Ruili City, China and internally displaced persons camps in the Kachin State, Myanmar. A physical exhibition of work will take place at Brown in March 2016, and student essays from the course are currently available through a digital exhibition space online (<a href="https://globalchinaexbt.wordpress.com">https://globalchinaexbt.wordpress.com</a>). The exhibition will be paired with a seminar that invites Burmese and ethnic minority scholars from China, to share their work in US contexts. Funding for the conference and participant travel has been secured by the <a href="http://watson.brown.edu/china/about">China Initiative</a> at Brown University’s Watson Institute for International Studies.</p>
+     <div class="property-list" role="list" id="relatedBy-Authorship-List" displaylimit="5">
     </div>
--->
+
   </div>
 
 
@@ -829,27 +485,6 @@
             <tbody>
                 <tr class="tableRow" role="listitem">
                   <td class="citation-data">
-                    <span class="listDateTime">AMST 1500A - Research and Transnational Communities: Qualitative Fieldwork Methods</span>
-                  </td>
-                </tr>
-                <tr class="tableRow" role="listitem">
-                  <td class="citation-data">
-                    <span class="listDateTime">AMST 1500C - Critical Approaches to Global Humanitarianism in Thailand</span>
-                  </td>
-                </tr>
-                <tr class="tableRow" role="listitem">
-                  <td class="citation-data">
-                    <span class="listDateTime">AMST 1600C - The Anti-Trafficking Savior Complex: Saints, Sinners, and Modern-Day Slavery</span>
-                  </td>
-                </tr>
-                <tr class="tableRow" role="listitem">
-                  <td class="citation-data">
-                    <span class="listDateTime">AMST 1700L - Bad Rehab: Rehabilitation Regimes of the American Ethic</span>
-                  </td>
-                </tr>
-                <tr class="tableRow" role="listitem">
-                  <td class="citation-data">
-                    <span class="listDateTime">ETHN 1900E - Senior Seminar in Ethnic Studies</span>
                   </td>
                 </tr>
             </tbody>
