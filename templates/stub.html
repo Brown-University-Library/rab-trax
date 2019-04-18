@@ -20,6 +20,12 @@
 <script src="{{ url_for('static', filename='javascripts/jquery.js') }}"></script>
 <script src="{{ url_for('static', filename='javascripts/bootstrap.js') }}"></script>
 <script src="{{ url_for('static', filename='javascripts/application.js') }}"></script>
+<style>
+  textarea {
+    width: 100%;
+    height: 350px;
+  }
+</style>
 </head>
 
 <body class="no-logo fae">
@@ -305,7 +311,9 @@
 
   <div class="tabFinder" id="tabOverview">
     <h3>Overview</h3>
+    <button id="edit-overview">Edit</button>
     <p></p>
+    <textarea id="overview" hidden></textarea>
 
       <h4 class="brown-affiliations panel-heading">Brown Affiliations</h4>
       <div class="brown-affiliations-list">
@@ -317,6 +325,10 @@
 
       <h4 class="research-areas panel-heading">On the Web</h4>
       <div class="brown-research-areas-list">
+      <button id="edit-links">Edit</button>
+      <ul id="links">
+        <li id="link_template"><input class="url" type="text"><input class="link_text" type="text"></li>
+      </ul>
 <!--             <span class="glyphicon glyphicon-link" aria-hidden="true"></span>
           <a href="http://www.elenashih.org" target="_blank">Personal Website</a><br/> -->
       </div>
@@ -524,6 +536,46 @@
     </div>
   </div>
 </footer>
+<script type="text/javascript">
+  var $edit_ovr, $ovr, shortid;
+
+  shortid = "{{ shortid }}";
+
+  $edit_ovr = $('#edit-overview');
+  $ovr = $('#overview');
+  $edit_link = $('#edit-links');
+  $links = $('#links');
+  $link_tmpl = $('#link_template');
+  $link_tmpl.detach();
+
+  $edit_ovr.on('click', function() {
+    $.ajax({
+      type: "GET",
+      dataType: "json",
+      url: `http://localhost:5000/people/${shortid}/overview`,
+      success: function( data ) {
+        $ovr.val( data );
+        $ovr.prop('hidden', false);
+      }
+    });
+  });
+
+  $edit_link.on('click', function() {
+    $.ajax({
+      type: "GET",
+      dataType: "json",
+      url: `http://localhost:5000/people/${shortid}/weblinks`,
+      success: function( data ) {
+        for (link of data) {
+          $link = $link_tmpl.clone();
+          $link.find('.url').val(link.url);
+          $link.find('.link_text').val(link.link_text);
+          $links.append($link);
+        }
+      }
+    });
+  });
+</script>
 </body>
 
 </html>
