@@ -400,7 +400,7 @@ def get_weblinks(shortid):
 
 @app.route('/profile/<shortid>')
 def profile_editor(shortid):
-    return render_template('stub.html', shortid=shortid)
+    return render_template('profile.html', shortid=shortid)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
