@@ -2,3 +2,5 @@
 .envrc
 __pycache__/
 config/api.cfg
+static/
+views/
