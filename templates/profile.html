@@ -552,7 +552,7 @@
     $.ajax({
       type: "GET",
       dataType: "json",
-      url: `http://localhost:5000/people/${shortid}/overview`,
+      url: "{{ url_for('get_overview', shortid=shortid) }}",
       success: function( data ) {
         $ovr.val( data );
         $ovr.prop('hidden', false);
@@ -564,7 +564,7 @@
     $.ajax({
       type: "GET",
       dataType: "json",
-      url: `http://localhost:5000/people/${shortid}/weblinks`,
+      url: "{{ url_for('get_weblinks', shortid=shortid) }}",
       success: function( data ) {
         for (link of data) {
           $link = $link_tmpl.clone();

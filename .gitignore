@@ -3,4 +3,5 @@
 __pycache__/
 config/api.cfg
 static/
-views/
+apache/
+venv/
