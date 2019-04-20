@@ -437,8 +437,7 @@
   </div> <!-- panel -->
 
     <div id="tabAffiliations" class="panel panel-default hidden">
-    <h3 style="padding-bottom: 21px;">Affiliations
-    </h3>
+    <h3 style="padding-bottom: 21px;">Affiliations</h3>
 
           <div class="panel-heading">
             <h4 id="relatedBy-Authorship" class="panel-title">Collaborators</h4>
@@ -468,8 +467,62 @@
   <div class="panel-body">
     <div class="property-list" role="list" id="relatedBy-Authorship-List" displaylimit="5">
     </div>
-  </div>
+          <div class="panel-heading">
+            <h4 id="relatedBy-Authorship" title="" class="panel-title">Credentials/Licenses</h4>
+          </div>
 
+          <div class="panel-body panel-body-credentials">
+            <table class="table table-hover">
+              <tbody>
+<!--                   <tr class="tableRow" role="listitem">
+                    <td>Controlled Substance License</td>
+                    <td>Rhode Island</td>
+                    <td>2011-Present</td>
+                    <td></td>
+                  </tr> -->
+                  <tr class="tableRow template" role="listitem">
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                  </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="panel-heading">
+            <h4 id="relatedBy-Authorship" title="" class="panel-title">Appointments</h4>
+          </div>
+
+          <div class="panel-body">
+            <table class="table table-hover">
+              <tbody>
+                  <tr class="tableRow" role="listitem">
+<!--                     <td>
+                      <span>Medical Director</span>.
+                        <span>
+                          <a href="https://vivo.brown.edu/search?q=appointment_at:&quot;Rhode+Island+Hospital&quot;"
+                            title="Find researchers that had appointments at this institution">
+                            Rhode Island Hospital</a>,
+                        </span>
+                      <span></span>
+                      <span>2012-Present</span>
+                    </td> -->
+                  </tr>
+                  <tr class="tableRow template" role="listitem">
+                    <td>
+                      <span></span>.
+                        <span><a></a>,
+                        </span>
+                      <span></span>
+                      <span></span>
+                    </td>
+                  </tr>
+
+              </tbody>
+            </table>
+          </div>
+  </div> <!-- panel -->
 
 
   </div> <!-- panel -->
@@ -565,6 +618,21 @@
       type: "GET",
       dataType: "json",
       url: "{{ url_for('get_weblinks', shortid=shortid) }}",
+      success: function( data ) {
+        for (link of data) {
+          $link = $link_tmpl.clone();
+          $link.find('.url').val(link.url);
+          $link.find('.link_text').val(link.link_text);
+          $links.append($link);
+        }
+      }
+    });
+
+  $appts_link.on('click', function() {
+    $.ajax({
+      type: "GET",
+      dataType: "json",
+      url: "{{ url_for('get_appointments', shortid=shortid) }}",
       success: function( data ) {
         for (link of data) {
           $link = $link_tmpl.clone();
