@@ -82,7 +82,44 @@ def run_query(queryText):
 
 @app.route('/')
 def index():
-    return "RAB TRAX"
+    query = '''	
+	PREFIX blocal:   <http://vivo.brown.edu/ontology/vivo-brown/>
+	PREFIX bprofile: <http://vivo.brown.edu/ontology/profile#>
+	SELECT ?fac ?shortid (count(?appt) as ?c)
+	WHERE
+	{
+	?fac bprofile:hasAppointment ?appt .
+	?fac blocal:shortId ?shortid
+	}
+	GROUP BY ?fac ?shortid
+	ORDER BY DESC(?c)
+	LIMIT 10
+    '''
+    headers = {'Accept': 'text/csv', 'charset':'utf-8'}
+    data = { 'email': user, 'password': passw, 'query': query }
+    resp = requests.post(queryUrl, data=data, headers=headers)
+	appts = json.loads(resp.text)
+    query = '''
+    PREFIX blocal:   <http://vivo.brown.edu/ontology/vivo-brown/>
+    SELECT ?fac ?shortid (count(?web) as ?c)
+    WHERE
+    {
+	?fac blocal:drrbWebPage ?web .
+        ?fac blocal:shortId ?shortid
+    }
+    GROUP BY ?fac ?shortid
+    ORDER BY DESC(?c)
+	LIMIT 10
+    '''
+    headers = {'Accept': 'text/csv', 'charset':'utf-8'}
+    data = { 'email': user, 'password': passw, 'query': query }
+    resp = requests.post(queryUrl, data=data, headers=headers)
+	web = json.loads(resp.text)
+    if resp.status_code == 200:
+        return jsonify({ 'appts': appts, 'web': web })
+    else:
+        return {}
+    return "index.html"
 
 @app.route('/people/')
 def people_index():
