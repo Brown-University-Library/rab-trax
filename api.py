@@ -321,7 +321,7 @@ def get_appointments(shortid):
     WHERE
     {{
         <http://vivo.brown.edu/individual/{}> bprofile:hasAppointment ?appt .
-        ?appt a profile:Appointment .
+        ?appt a bprofile:Appointment .
         ?appt rdfs:label ?a_name .
         OPTIONAL {{ ?appt bprofile:startDate ?start . }}
         OPTIONAL {{ ?appt bprofile:endDate ?end . }}
@@ -372,7 +372,7 @@ def get_credentials(shortid):
     WHERE
     {{
         <http://vivo.brown.edu/individual/{}> bprofile:hasAppointment ?appt .
-        ?appt a profile:Credential .
+        ?appt a bprofile:Credential .
         ?appt rdfs:label ?a_name .
         OPTIONAL {{ ?appt bprofile:startDate ?start . }}
         OPTIONAL {{ ?appt bprofile:endDate ?end . }}
