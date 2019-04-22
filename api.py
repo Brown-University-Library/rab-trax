@@ -100,7 +100,7 @@ def index():
     data = { 'email': user, 'password': passw, 'query': query }
     resp = requests.post(queryUrl, data=data, headers=headers)
     rdr = csv.reader(resp.text)
-    appts = [ row for row in csv.reader(resp.text.split('\n')) ]
+    appts = [ row for row in csv.reader(resp.text.split('\n')) ][1:]
     query = '''
     PREFIX blocal:   <http://vivo.brown.edu/ontology/vivo-brown/>
     SELECT ?fac ?shortid (count(?web) as ?c)
@@ -116,12 +116,11 @@ def index():
     headers = {'Accept': 'text/csv', 'charset':'utf-8'}
     data = { 'email': user, 'password': passw, 'query': query }
     resp = requests.post(queryUrl, data=data, headers=headers)
-    web = [ row for row in csv.reader(resp.text.split('\n')) ]
+    web = [ row for row in csv.reader(resp.text.split('\n')) ][1:]
     if resp.status_code == 200:
-        return jsonify({ 'appts': appts, 'web': web })
+        return render_template('index.html', web=web, appts=appts)
     else:
         return {}
-    return "index.html"
 
 @app.route('/people/')
 def people_index():

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Index</title>
+</head>
+<body>
+<ul>
+ {% for w in web %}
+ 	<li><a href="{{ url_for('profile_editor', shortid=w[1]) }}">{{ w[0] }}</a>: {{ w[2] }}</li>
+ {% endfor %}
+</ul>
+<ul>
+ {% for a in appts %}
+ 	<li><a href="{{ url_for('profile_editor', shortid=a[1]) }}">{{ a[0] }}</a>: {{ a[2] }}</li>
+ {% endfor %}
+</ul>
+</body>
+</html>
