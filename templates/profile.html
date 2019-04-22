@@ -314,14 +314,13 @@
     <button id="edit-overview">Edit</button>
     <p></p>
     <textarea id="overview" hidden></textarea>
-
-      <h4 class="brown-affiliations panel-heading">Brown Affiliations</h4>
+<!--       <h4 class="brown-affiliations panel-heading">Brown Affiliations</h4>
       <div class="brown-affiliations-list">
       </div>
 
       <h4 class="research-areas panel-heading">Research Areas</h4>
       <div class="brown-research-areas-list">
-      </div>
+      </div> -->
 
       <h4 class="research-areas panel-heading">On the Web</h4>
       <div class="brown-research-areas-list">
@@ -334,6 +333,61 @@
       </div>
      <!-- on_the_web.count -->
     <br/><br/>
+    <div class="panel-heading">
+            <h4 id="relatedBy-Authorship" title="" class="panel-title">Credentials/Licenses</h4>
+          </div>
+
+          <div class="panel-body panel-body-credentials">
+          <button id="edit-creds">Edit</button>
+            <table class="table table-hover">
+              <tbody id="creds">
+<!--                   <tr class="tableRow" role="listitem">
+                    <td>Controlled Substance License</td>
+                    <td>Rhode Island</td>
+                    <td>2011-Present</td>
+                    <td></td>
+                  </tr> -->
+                  <tr id="cred_template" class="tableRow template" role="listitem">
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                  </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="panel-heading">
+            <h4 id="relatedBy-Authorship" title="" class="panel-title">Appointments</h4>
+          </div>
+          <div class="panel-body">
+          <button id="edit-appts">Edit</button>
+            <table class="table table-hover">
+              <tbody id="appts">
+<!--                   <tr  class="tableRow" role="listitem">
+                    <td>
+                      <span>Medical Director</span>.
+                        <span>
+                          <a href="https://vivo.brown.edu/search?q=appointment_at:&quot;Rhode+Island+Hospital&quot;"
+                            title="Find researchers that had appointments at this institution">
+                            Rhode Island Hospital</a>,
+                        </span>
+                      <span></span>
+                      <span>2012-Present</span>
+                    </td>
+                  </tr> -->
+                  <tr id="appt_template" class="tableRow template" role="listitem">
+                    <td>
+                      <input type="text" class="appt-title"/>
+                      <input data-rabid="" type="text" class="appt-org" />
+                      <input type="text" class="appt-start" />
+                      <input type="text" class="appt-end" />
+                    </td>
+                  </tr>
+
+              </tbody>
+            </table>
+          </div>
   </div> <!-- panel -->
 
 
@@ -600,6 +654,14 @@
   $links = $('#links');
   $link_tmpl = $('#link_template');
   $link_tmpl.detach();
+  $appts = $('#appts');
+  $edit_appt = $('#edit-appts');
+  $appt_tmpl = $('#appt_template');
+  $appt_tmpl.detach();
+  $cred = $('#creds');
+  $edit_cred = $('#edit-cred');
+  $cred_tmpl = $('#cred_template');
+  $cred_tmpl.detach();
 
   $edit_ovr.on('click', function() {
     $.ajax({
@@ -629,21 +691,39 @@
     });
   });
 
-  $appts_link.on('click', function() {
+  $edit_appt.on('click', function() {
     $.ajax({
       type: "GET",
       dataType: "json",
       url: "{{ url_for('get_appointments', shortid=shortid) }}",
       success: function( data ) {
-        for (link of data) {
-          $link = $link_tmpl.clone();
-          $link.find('.url').val(link.url);
-          $link.find('.link_text').val(link.link_text);
-          $links.append($link);
+        for (appt of data) {
+          $appt = $appt_tmpl.clone();
+          $appt.find('.appt-title').val(appt.title);
+          $appt.find('.appt-org').attr('data-rabid', appt.org.rabid).val(appt.org.name);
+          $appt.find('.appt-start').val(appt.start);
+          $appt.find('.appt-end').val(appt.end);
+          $appts.append($appt);
         }
       }
     });
   });
+
+  // $edit_cred.on('click', function() {
+  //   $.ajax({
+  //     type: "GET",
+  //     dataType: "json",
+  //     url: "{{ url_for('get_credentials', shortid=shortid) }}",
+  //     success: function( data ) {
+  //       for (cred of data) {
+  //         $appt = $appt_tmpl.clone();
+  //         $appt.find('.url').val(link.url);
+  //         $appt.find('.link_text').val(link.link_text);
+  //         $appts.append($link);
+  //       }
+  //     }
+  //   });
+  // });
 </script>
 </body>
 

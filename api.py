@@ -100,7 +100,7 @@ def index():
     data = { 'email': user, 'password': passw, 'query': query }
     resp = requests.post(queryUrl, data=data, headers=headers)
     rdr = csv.reader(resp.text)
-    appts = [ row for row in csv.reader(resp.text.split('\n')) ][1:]
+    appts = [ row for row in csv.reader(resp.text.split('\n')) ][1:-1]
     query = '''
     PREFIX blocal:   <http://vivo.brown.edu/ontology/vivo-brown/>
     SELECT ?fac ?shortid (count(?web) as ?c)
@@ -116,7 +116,7 @@ def index():
     headers = {'Accept': 'text/csv', 'charset':'utf-8'}
     data = { 'email': user, 'password': passw, 'query': query }
     resp = requests.post(queryUrl, data=data, headers=headers)
-    web = [ row for row in csv.reader(resp.text.split('\n')) ][1:]
+    web = [ row for row in csv.reader(resp.text.split('\n')) ][1:-1]
     if resp.status_code == 200:
         return render_template('index.html', web=web, appts=appts)
     else:
@@ -231,25 +231,6 @@ def get_research_areas(shortid):
     else:
         return {}
 
-def cast_appointment(jdata):
-    data = {}
-    data['rabid'] = jdata['@id']
-    data['name'] = parse_data_property(
-        jdata, 'http://www.w3.org/2000/01/rdf-schema#label')
-    data['hospital'] = parse_data_property(
-        jdata, 'http://vivoweb.org/ontology/core#linkAnchorText')
-    data['start'] = parse_data_property(
-        jdata, 'http://vivo.brown.edu/ontology/profile#startDate')
-    data['end'] = parse_data_property(
-        jdata, 'http://vivo.brown.edu/ontology/profile#endDate')
-    return data
-
-def parse_appt_data(jdata):
-    out = []
-    for j in jdata:
-        out.append(cast_appointment(j))
-    return out
-
 @app.route('/people/<shortid>/appt_combined')
 def get_combined_appointment(shortid):
     data = {}
@@ -333,6 +314,39 @@ def get_appoinment_objects(shortid):
     else:
         return {}
 
+def cast_appointment(jdata, labelMap):
+    data = {}
+    data['rabid'] = jdata['@id']
+    data['title'] = parse_data_property(
+        jdata, 'http://www.w3.org/2000/01/rdf-schema#label')
+    if jdata.get('http://vivo.brown.edu/ontology/profile#hasHospital'):
+        h_obj = jdata['http://vivo.brown.edu/ontology/profile#hasHospital'][0]
+        data['org'] = {}
+        data['org']['rabid'] = h_obj['@id']
+        data['org']['name'] = labelMap[h_obj['@id']]
+    data['start'] = parse_data_property(
+        jdata, 'http://vivo.brown.edu/ontology/profile#startDate')
+    data['end'] = parse_data_property(
+        jdata, 'http://vivo.brown.edu/ontology/profile#endDate')
+    return data
+
+def isAppointment(jdata):
+    appt_types = { "http://vivo.brown.edu/ontology/profile#HospitalAppointment" }
+    return set(jdata.get('@type', [None])) & appt_types
+
+def parse_appt_data(jdata):
+    skip = { 'http://vivo.brown.edu/ontology/profile#HospitalAppointment',
+        'http://www.w3.org/2002/07/owl#Thing'}
+    flt = [ d for d in jdata if d['@id'] not in skip ]
+    label_map = {
+        d['@id'] : d['http://www.w3.org/2000/01/rdf-schema#label'][0]['@value']
+            for d in flt }
+    out = []
+    for j in flt:
+        if isAppointment(j):
+            out.append(cast_appointment(j, label_map))
+    return out
+
 @app.route('/people/<shortid>/appointments')
 def get_appointments(shortid):
     query = '''
@@ -342,6 +356,7 @@ def get_appointments(shortid):
     PREFIX bprofile: <http://vivo.brown.edu/ontology/profile#>
     CONSTRUCT {{
         ?appt rdfs:label ?a_name .
+        ?appt rdf:type ?type .
         ?appt bprofile:startDate ?start .
         ?appt bprofile:endDate ?end .
         ?appt bprofile:department ?dept .
@@ -359,8 +374,8 @@ def get_appointments(shortid):
     WHERE
     {{
         <http://vivo.brown.edu/individual/{}> bprofile:hasAppointment ?appt .
-        ?appt a bprofile:Appointment .
         ?appt rdfs:label ?a_name .
+        ?appt rdf:type ?type .
         OPTIONAL {{ ?appt bprofile:startDate ?start . }}
         OPTIONAL {{ ?appt bprofile:endDate ?end . }}
         OPTIONAL {{ ?appt bprofile:department ?dept . }}
@@ -380,7 +395,8 @@ def get_appointments(shortid):
     data = { 'email': user, 'password': passw, 'query': query }
     resp = requests.post(queryUrl, data=data, headers=headers)
     if resp.status_code == 200:
-        return jsonify(json.loads(resp.text))
+        data = json.loads(resp.text)
+        return jsonify(parse_appt_data(data))
     else:
         return {}
 
@@ -393,6 +409,7 @@ def get_credentials(shortid):
     PREFIX bprofile: <http://vivo.brown.edu/ontology/profile#>
     CONSTRUCT {{
         ?appt rdfs:label ?a_name .
+        ?appt rdf:type ?type .
         ?appt bprofile:startDate ?start .
         ?appt bprofile:endDate ?end .
         ?appt bprofile:department ?dept .
@@ -410,8 +427,8 @@ def get_credentials(shortid):
     WHERE
     {{
         <http://vivo.brown.edu/individual/{}> bprofile:hasAppointment ?appt .
-        ?appt a bprofile:Credential .
         ?appt rdfs:label ?a_name .
+        ?appt rdf:type ?type .
         OPTIONAL {{ ?appt bprofile:startDate ?start . }}
         OPTIONAL {{ ?appt bprofile:endDate ?end . }}
         OPTIONAL {{ ?appt bprofile:department ?dept . }}
