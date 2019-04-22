@@ -99,7 +99,8 @@ def index():
     headers = {'Accept': 'text/csv', 'charset':'utf-8'}
     data = { 'email': user, 'password': passw, 'query': query }
     resp = requests.post(queryUrl, data=data, headers=headers)
-	appts = [ (row[1], row[2]) for row in csv.reader(resp.text) ]
+    rdr = csv.reader(resp.text)
+    appts = [ row for row in csv.reader(resp.text.split('\n')) ]
     query = '''
     PREFIX blocal:   <http://vivo.brown.edu/ontology/vivo-brown/>
     SELECT ?fac ?shortid (count(?web) as ?c)
@@ -115,7 +116,7 @@ def index():
     headers = {'Accept': 'text/csv', 'charset':'utf-8'}
     data = { 'email': user, 'password': passw, 'query': query }
     resp = requests.post(queryUrl, data=data, headers=headers)
-	web = [ (row[1], row[2]) for row in csv.reader(resp.text) ]
+    web = [ row for row in csv.reader(resp.text.split('\n')) ]
     if resp.status_code == 200:
         return jsonify({ 'appts': appts, 'web': web })
     else:
