@@ -4,7 +4,7 @@ import os
 import json
 import time
 
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 import requests
 
 app = Flask(__name__)
@@ -503,6 +503,68 @@ def get_weblinks(shortid):
 @app.route('/profile/<shortid>')
 def profile_editor(shortid):
     return render_template('profile.html', shortid=shortid)
+
+def rest_get_overview(shortid):
+    query = '''
+    PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX vivo:     <http://vivoweb.org/ontology/core#>
+    PREFIX blocal:   <http://vivo.brown.edu/ontology/vivo-brown/>
+    CONSTRUCT {{
+        <http://vivo.brown.edu/individual/{0}> vivo:overview ?over .
+    }}
+    WHERE
+    {{
+        <http://vivo.brown.edu/individual/{0}> vivo:overview ?over .
+    }}
+    '''.format(shortid)
+    headers = {'Accept': 'application/json', 'charset':'utf-8'}
+    data = { 'email': user, 'password': passw, 'query': query }
+    resp = requests.post(queryUrl, data=data, headers=headers)
+    if resp.status_code == 200:
+        data = json.loads(resp.text)
+        return jsonify( parse_data_property(
+            data[0], 'http://vivoweb.org/ontology/core#overview'))
+    else:
+        return {}
+
+def rest_update_overview(shortId, add, rmv):
+    query = '''
+    PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX vivo:     <http://vivoweb.org/ontology/core#>
+    PREFIX blocal:   <http://vivo.brown.edu/ontology/vivo-brown/>
+    '''
+    del_cmd = '''DELETE DATA {{ GRAPH {0} {{
+        <http://vivo.brown.edu/individual/{1}> vivo:overview "{2}" . }}
+    }}'''
+    ins_cmd = '''INSERT DATA {{ GRAPH {0} {{
+        <http://vivo.brown.edu/individual/{1}> vivo:overview "{2}" . }}
+    }}'''
+    graph = '<http://vitro.mannlib.cornell.edu/default/vitro-kb-2>'
+    if rmv:
+        query += del_cmd.format(graph, shortId, rmv)
+    if add:
+        query += ins_cmd.format(graph, shortId, add)
+    headers = {}
+    data = { 'email': user, 'password': passw, 'update': query }
+    resp = requests.post(updateUrl, data=data, headers=headers)
+    return resp.text
+
+@app.route('/profile/<shortId>/overview',
+    methods=['GET', 'POST', 'PUT', 'DELETE'])
+def rest_overview(shortId):
+    if request.method == 'GET':
+        return rest_get_overview(shortId)
+    if request.method == 'POST':
+        data = request.get_json()
+        return rest_update_overview(shortId, data['add'], None)
+    if request.method == 'PUT':
+        data = request.get_json()
+        return rest_update_overview(shortId, data['add'], data['remove'])
+    if request.method == 'DELETE':
+        data = request.get_json()
+        return rest_update_overview(shortId, None, data['remove'])
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
