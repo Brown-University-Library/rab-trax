@@ -3,6 +3,7 @@ import csv
 import os
 import json
 import time
+import random
 
 from flask import Flask, jsonify, render_template, request
 import requests
@@ -19,6 +20,7 @@ queryUrl = os.environ['QUERY']
 updateUrl = os.environ['UPDATE']
 user = os.environ['USER']
 passw = os.environ['PASSW']
+dataDir = app.config['DATA']
 
 def parse_data_property(jldObj, prop):
     field = jldObj.get(prop, None)
@@ -35,51 +37,168 @@ def parse_JSON_string(stringData):
                         for o in z ]
     return triples
 
-many_query = '''
-    PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-    PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
-    PREFIX vivo:     <http://vivoweb.org/ontology/core#>
-    CONSTRUCT { ?fac rdfs:label ?label .}
-    WHERE
-    {
-          ?fac a vivo:FacultyMember .
-          ?fac rdfs:label ?label .
-    }
-    LIMIT 10
+profiling_queries = {
+    '10_faculty_with_labels': '''
+        PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX vivo:     <http://vivoweb.org/ontology/core#>
+        CONSTRUCT { ?fac rdfs:label ?label .}
+        WHERE
+        {
+              ?fac a vivo:FacultyMember .
+              ?fac rdfs:label ?label .
+        }
+        LIMIT 10
+    ''',
+    'generic_predicate_object': '''
+        PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX vivo:     <http://vivoweb.org/ontology/core#>
+        CONSTRUCT {{ <{0}> ?p ?o .}}
+        WHERE
+        {{
+              <{0}> ?p ?o .
+        }}
+    ''',
+    'rdfs_label': '''
+        PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX vivo:     <http://vivoweb.org/ontology/core#>
+        CONSTRUCT {{ <{0}> rdfs:label ?label .}}
+        WHERE
+        {{
+              <{0}> rdfs:label ?label .
+        }}
+    ''',
+    'describe': 'DESCRIBE <{0}>',
+    'label_with_optional_overview': '''
+        PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX vivo:     <http://vivoweb.org/ontology/core#>
+        CONSTRUCT {{
+            <{0}> rdfs:label ?label .
+            <{0}> vivo:overview ?ovr .
+        }}
+        WHERE
+        {{
+              <{0}> rdfs:label ?label .
+              OPTIONAL {{ <{0}> vivo:overview ?ovr .}}
+        }}
+    ''',
+    'optional_profile_data_properties' : '''
+        PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX vivo:     <http://vivoweb.org/ontology/core#>
+        PREFIX blocal:   <http://vivo.brown.edu/ontology/vivo-brown/>
+        CONSTRUCT {{
+            <{0}> blocal:fullName ?full .
+            <{0}> blocal:alphaName ?alpha .
+            <{0}> blocal:affiliations ?affiliations .
+            <{0}> blocal:awardsAndHonors ?awards .
+            <{0}> blocal:fundedResarch ?funded .
+            <{0}> blocal:researchStatement ?statement .
+            <{0}> blocal:scholarlyWork ?scholarly .
+            <{0}> vivo:overview ?over .
+            <{0}> vivo:researchOverview ?res_over .
+            <{0}> vivo:teachingOverview ?teach_over .
+        }}
+        WHERE
+        {{
+            <{0}> blocal:fullName ?full .
+            <{0}> blocal:alphaName ?alpha .
+            OPTIONAL {{ <{0}> blocal:affiliations ?affiliations . }}
+            OPTIONAL {{ <{0}> blocal:awardsAndHonors ?awards . }}
+            OPTIONAL {{ <{0}> blocal:fundedResarch ?funded . }}
+            OPTIONAL {{ <{0}> blocal:researchStatement ?statement . }}
+            OPTIONAL {{ <{0}> blocal:scholarlyWork ?scholarly . }}
+            OPTIONAL {{ <{0}> vivo:overview ?over . }}
+            OPTIONAL {{ <{0}> vivo:researchOverview ?res_over . }}
+            OPTIONAL {{ <{0}> vivo:teachingOverview ?teach_over . }}
+        }}
+    ''',
+    'optional_profile_data_properties_with_type' : '''
+        PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX vivo:     <http://vivoweb.org/ontology/core#>
+        PREFIX blocal:   <http://vivo.brown.edu/ontology/vivo-brown/>
+        CONSTRUCT {{
+            <{0}> blocal:fullName ?full .
+            <{0}> blocal:alphaName ?alpha .
+            <{0}> blocal:affiliations ?affiliations .
+            <{0}> blocal:awardsAndHonors ?awards .
+            <{0}> blocal:fundedResarch ?funded .
+            <{0}> blocal:researchStatement ?statement .
+            <{0}> blocal:scholarlyWork ?scholarly .
+            <{0}> vivo:overview ?over .
+            <{0}> vivo:researchOverview ?res_over .
+            <{0}> vivo:teachingOverview ?teach_over .
+        }}
+        WHERE
+        {{
+            <{0}> rdf:type vivo:FacultyMember .
+            <{0}> blocal:fullName ?full .
+            <{0}> blocal:alphaName ?alpha .
+            OPTIONAL {{ <{0}> blocal:affiliations ?affiliations . }}
+            OPTIONAL {{ <{0}> blocal:awardsAndHonors ?awards . }}
+            OPTIONAL {{ <{0}> blocal:fundedResarch ?funded . }}
+            OPTIONAL {{ <{0}> blocal:researchStatement ?statement . }}
+            OPTIONAL {{ <{0}> blocal:scholarlyWork ?scholarly . }}
+            OPTIONAL {{ <{0}> vivo:overview ?over . }}
+            OPTIONAL {{ <{0}> vivo:researchOverview ?res_over . }}
+            OPTIONAL {{ <{0}> vivo:teachingOverview ?teach_over . }}
+        }}
     '''
-one_query_gen = '''
-    PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-    PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
-    PREFIX vivo:     <http://vivoweb.org/ontology/core#>
-    CONSTRUCT { <http://vivo.brown.edu/individual/jkauer> ?p ?o .}
-    WHERE
-    {
-          <http://vivo.brown.edu/individual/jkauer> ?p ?o .
-    }
-    '''
-one_query_spec = '''
-    PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-    PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
-    PREFIX vivo:     <http://vivoweb.org/ontology/core#>
-    CONSTRUCT { <http://vivo.brown.edu/individual/jkauer> rdfs:label ?label .}
-    WHERE
-    {
-          <http://vivo.brown.edu/individual/jkauer> rdfs:label ?label .
-    }
-    '''
-desc_query = '''
-    DESCRIBE <http://vivo.brown.edu/individual/jkauer>
-    '''
+}
 
-def run_query(queryText):
+def summarize_json_data(jdata, uri):
+    out = {'field_count': 0, 'fields': {}, 'pointers': [] }
+    for j in jdata:
+        if j['@id'] == uri:
+            out['fields'] = j
+        else:
+            out['pointers'].append(j['@id'])
+    out['field_count'] = len(out['fields'])
+    return out
+
+def run_query(queryText, auth):
+    uri = 'http://vivo.brown.edu/individual/{}'.format(auth)
     headers = {'Accept': 'application/json', 'charset':'utf-8'}
-    data = { 'email': user, 'password': passw, 'query': queryText }
+    data = { 'email': user, 'password': passw, 'query': queryText.format(uri) }
     start = time.process_time()
     resp = requests.post(queryUrl, data=data, headers=headers)
     duration = time.process_time() - start
-    out = { 'time': duration, 'data': json.loads(resp.text),
-        'url': resp.request.url, 'headers': dict(resp.request.headers) }
+    out = summarize_json_data(json.loads(resp.text), uri)
+    out['elapsed_time'] = duration
     return out
+
+@app.route('/profiling')
+def query_profiling():
+    with open(os.path.join(dataDir, 'recent_shortids.csv'), 'r') as f:
+        rdr = csv.reader(f)
+        next(rdr) #skip header
+        auth_ids = [ row[0] for row in rdr ]
+    queries = [ 'optional_profile_data_properties',
+        'optional_profile_data_properties_with_type' ]
+    out = []
+    random.shuffle(auth_ids)
+    for e, q in enumerate(queries):
+        print('query: {}'.format(q))
+        stats = { 'details': {},
+            '_avg_time': 0, '_avg_fields': 0 }
+        batch = 5
+        auths = auth_ids[batch*e:batch*e+batch]
+        for auth in auths:
+            print('....{}'.format(auth))
+            stats['details'][auth] = run_query(profiling_queries[q], auth)
+            stats['_avg_time'] += stats['details'][auth]['elapsed_time']
+            stats['_avg_fields'] += stats['details'][auth]['field_count']
+            time.sleep(1)
+        stats['_avg_time'] = stats['_avg_time']/batch
+        stats['_avg_fields'] = stats['_avg_fields']/batch
+        stats['_secs/field'] = stats['_avg_time']/stats['_avg_fields']
+        out.append( (q, stats) )
+    out = sorted(out, key=lambda stat: stat[1]['_secs/field'])
+    return jsonify([ { o[0]: o[1] } for o in out ])
 
 @app.route('/')
 def index():
@@ -121,16 +240,6 @@ def index():
         return render_template('index.html', web=web, appts=appts)
     else:
         return {}
-
-@app.route('/people/')
-def people_index():
-    queries = [ one_query_gen, one_query_spec, desc_query ]
-    out = []
-    for q in queries:
-        data = run_query(q)
-        out.append(data)
-        time.sleep(5)
-    return jsonify(out)
 
 @app.route('/people/<shortid>')
 def get_person(shortid):
@@ -522,12 +631,25 @@ def rest_get_overview(shortid):
     data = { 'email': user, 'password': passw, 'query': query }
     resp = requests.post(queryUrl, data=data, headers=headers)
     if resp.status_code == 200:
-        data = json.loads(resp.text)
-        return jsonify( parse_data_property(
-            data[0], 'http://vivoweb.org/ontology/core#overview'))
+        data = resp.json()
+        if data:
+            return jsonify( parse_data_property(
+                data[0], 'http://vivoweb.org/ontology/core#overview'))
+        else:
+            return ''
     else:
         return {}
 
+def clean_literal(literal): 
+    literal = literal.strip() 
+    if literal.startswith('"') and literal.endswith('"'): 
+        return literal[1:-1] 
+    return literal
+
+def prep_string_input(input):
+    return input.replace('"', r'\"')
+
+# https://www.w3.org/TR/sparql11-query/#grammarEscapes
 def rest_update_overview(shortId, add, rmv):
     query = '''
     PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -544,6 +666,8 @@ def rest_update_overview(shortId, add, rmv):
     graph = '<http://vitro.mannlib.cornell.edu/default/vitro-kb-2>'
     if rmv:
         query += del_cmd.format(graph, shortId, rmv)
+    if add and rmv:
+        query += ';'
     if add:
         query += ins_cmd.format(graph, shortId, add)
     headers = {}

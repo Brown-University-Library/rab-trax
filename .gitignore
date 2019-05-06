@@ -5,3 +5,4 @@ config/api.cfg
 static/
 apache/
 venv/
+data/*
