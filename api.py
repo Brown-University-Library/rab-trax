@@ -207,20 +207,23 @@ def run_queries_for_profiling():
     for e, q in enumerate(queries):
         print('query: {}'.format(q['name']))
         stats = { 'details': {},
-            '_avg_time': 0, '_avg_fields': 0 }
+            'avg_time': 0, 'avg_fields': 0 }
         auths = auth_ids[batch*e:batch*e+batch]
         for auth in auths:
             print('....{}'.format(auth))
             stats['details'][auth] = run_query(q['body'], auth)
-            stats['_avg_time'] += stats['details'][auth]['elapsed_time']
-            stats['_avg_fields'] += stats['details'][auth]['field_count']
+            stats['avg_time'] += stats['details'][auth]['elapsed_time']
+            stats['avg_fields'] += stats['details'][auth]['field_count']
             time.sleep(1)
-        stats['_avg_time'] = stats['_avg_time']/batch
-        stats['_avg_fields'] = stats['_avg_fields']/batch
-        stats['_secs/field'] = stats['_avg_time']/stats['_avg_fields']
-        out.append( (q['name'], stats) )
-    out = sorted(out, key=lambda stat: stat[1]['_secs/field'])
-    return jsonify([ { o[0]: o[1] } for o in out ])
+        stats['query'] = q['name']
+        stats['avg_time'] = stats['avg_time']/batch
+        stats['avg_fields'] = stats['avg_fields']/batch
+        stats['secs_per_field'] = format(stats['avg_time']/stats['avg_fields'], '.8g')
+        stats['avg_time'] = format(stats['avg_time'], '.8g')
+        stats['avg_fields'] = format(stats['avg_fields'], '.2f')
+        out.append( stats )
+    out = sorted(out, key=lambda stat: stat['secs_per_field'])
+    return jsonify( out )
 
 @app.route('/profiling')
 def query_profiling():

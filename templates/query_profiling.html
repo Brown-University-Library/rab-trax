@@ -31,7 +31,24 @@
       padding-right: 10px;
     }
     #query_results {
+      border-collapse: collapse;
+    }
+
+    #query_results tr {
       border: 1px solid black;
+    }
+
+    #query_results td, #query_results th {
+      padding: 5px;
+    }
+
+    #query_results td:nth-of-type(-n+3), #query_results th:nth-of-type(-n+3) {
+      border-right: 1px solid black;
+    }
+
+    progress[value] {
+      width: 300px;
+      height: 20px;
     }
 
   </style>
@@ -78,21 +95,63 @@
 </div>
 <input type="submit" value="Run"/>
 </form>
+<progress value="0"></progress>
 <table id="query_results">
   <thead>
     <tr>
       <th>Query</th>
+      <th>Average Seconds / Field</th>
       <th>Average Time</th>
       <th>Average Fields Returned</th>
-      <th>Average Seconds / Field</th>
       <th></th>
     </tr>
   </thead>
   <tbody>
+    <tr class="templates" id="result_row">
+      <td class="query-name"></td>
+      <td class="query-time-ratio"></td>
+      <td class="query-time-avg"></td>
+      <td class="query-field-avg"></td>
+      <td class="query-details"></td>
+    </tr>
   </tbody>
 </table>
 </body>
 <script type="text/javascript">
+  var $result_row;
+  var intervalID;
+
+  $(document).ready(function() {
+    $result_row = $('#result_row').detach();
+    $result_row.removeAttr('id').removeClass('templates');
+  });
+
+  var startProgress = function(numQueries, numTrials) {
+    $progress = $('progress');
+    $progress.attr('value', 0);
+    $progress.attr('max', numQueries * numTrials);
+    intervalID = window.setInterval(updateProgress, 1000, $progress);
+  };
+
+  function updateProgress($pbar) {
+    var val = parseFloat($pbar.attr('value'));
+    $pbar.attr('value', val + 0.5);
+  }
+
+  var loadResults = function(results) {
+    var $tbody = $('#query_results tbody');
+    for (var i=0; i < results.length; i++) {
+      var result = results[i];
+      var $row = $result_row.clone();
+      $row.find('.query-name').text(result['query']);
+      $row.find('.query-time-ratio').text(result['secs_per_field']);
+      $row.find('.query-time-avg').text(result['avg_time']);
+      $row.find('.query-field-avg').text(result['avg_fields']);
+      $tbody.append($row);
+    }
+  };
+
+
   $('#select_query').on('click', 'button', function(e){
     e.preventDefault();
     $('#view_query').find('pre').text($(this).next('p').text());
@@ -106,14 +165,16 @@
       data.queries.push($(this).val());
     })
     data.trials = $('#num_trials').val();
+    startProgress(data.queries.length, parseInt(data.trials));
     $.ajax({
       type: 'POST',
       url: "{{ url_for('run_queries_for_profiling')}}",
       contentType: "application/json",
       data: JSON.stringify(data),
       success: function(results) {
-        console.log(results);  
-        // loadResults(results);
+        window.clearInterval(intervalID);
+        $('progress').attr('value', 100);
+        loadResults(results);
       }
     });
   });
