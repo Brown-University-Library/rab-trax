@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Query profiling</title>
+  <script
+  src="https://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+  crossorigin="anonymous"></script>
+  <style>
+    th {
+      text-align:left
+    }
+    #query_ctrl {
+      display: flex;
+      /*justify-content: space-around;*/
+      /*align-items: left;*/
+    }
+    #select_query {
+      flex: 0 0 40%;
+    }
+    #view_query {
+      flex: 0 0 40%;
+      border: 1px solid black;
+    }
+    #query_options {
+      width: 100%;
+      min-width: 500px;
+    }
+    #query_text {
+      min-width: 400px;
+      padding-right: 10px;
+    }
+    #query_results {
+      border: 1px solid black;
+    }
+
+  </style>
+</head>
+<body>
+<h3>SPARQL Query Profiling</h3>
+<form id="run_queries">
+<div>
+<label for="num_trials"><strong>Trials</strong></label><br />
+<input type="number" id="num_trials" name="num_trials"
+       min="1" max="20" value="5">
+</div>
+<div id="query_ctrl">
+  <div id="select_query">
+    <table id="query_options">
+      <thead>
+        <tr>
+          <th>Queries in trial:</th>
+          <th></th>
+        <th></th>
+      </tr>
+      </thead>
+      <tbody>
+      {% for q in queries %}
+        <tr>
+          <td>
+            <input type="checkbox" class="query-options" id="{{ q.name }}" value="{{ q.name }}">
+            <label for="{{ q.name }}">{{ q.name }}</label>
+          </td>
+          <td>
+            <button class="show-query-body">view</button>
+            <p hidden>{{ q.body }}</p>
+          </td>
+          <td>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div id="view_query">
+    <pre id="query_text"></pre>
+  </div>
+</div>
+<input type="submit" value="Run"/>
+</form>
+<table id="query_results">
+  <thead>
+    <tr>
+      <th>Query</th>
+      <th>Average Time</th>
+      <th>Average Fields Returned</th>
+      <th>Average Seconds / Field</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+</body>
+<script type="text/javascript">
+  $('#select_query').on('click', 'button', function(e){
+    e.preventDefault();
+    $('#view_query').find('pre').text($(this).next('p').text());
+  });
+  $('#run_queries').on( "submit", function(e){
+    e.preventDefault();
+    $('pre').empty();
+    $('#query_results tbody').empty();
+    var data = {'queries': [], 'trials': 0};
+    $('.query-options:checked').each(function(i) {
+      data.queries.push($(this).val());
+    })
+    data.trials = $('#num_trials').val();
+    $.ajax({
+      type: 'POST',
+      url: "{{ url_for('run_queries_for_profiling')}}",
+      contentType: "application/json",
+      data: JSON.stringify(data),
+      success: function(results) {
+        console.log(results);  
+        // loadResults(results);
+      }
+    });
+  });
+</script>
+</body>
+</html>

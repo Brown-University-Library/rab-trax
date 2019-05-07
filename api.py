@@ -37,20 +37,25 @@ def parse_JSON_string(stringData):
                         for o in z ]
     return triples
 
-profiling_queries = {
-    '10_faculty_with_labels': '''
+profiling_queries = [
+    {
+    'name': '10_faculty_with_labels',
+    'body': '''
         PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX vivo:     <http://vivoweb.org/ontology/core#>
-        CONSTRUCT { ?fac rdfs:label ?label .}
+        CONSTRUCT {{ ?fac rdfs:label ?label .}}
         WHERE
-        {
+        {{
               ?fac a vivo:FacultyMember .
               ?fac rdfs:label ?label .
-        }
+        }}
         LIMIT 10
-    ''',
-    'generic_predicate_object': '''
+    '''
+    },
+    {
+    'name': 'generic_predicate_object',
+    'body': '''
         PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX vivo:     <http://vivoweb.org/ontology/core#>
@@ -59,8 +64,11 @@ profiling_queries = {
         {{
               <{0}> ?p ?o .
         }}
-    ''',
-    'rdfs_label': '''
+    '''
+    },
+    {
+    'name': 'rdfs_label',
+    'body': '''
         PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX vivo:     <http://vivoweb.org/ontology/core#>
@@ -69,9 +77,15 @@ profiling_queries = {
         {{
               <{0}> rdfs:label ?label .
         }}
-    ''',
-    'describe': 'DESCRIBE <{0}>',
-    'label_with_optional_overview': '''
+    '''
+    },
+    {
+    'name': 'describe',
+    'body': 'DESCRIBE <{0}>'
+    },
+    {
+    'name': 'label_with_optional_overview',
+    'body': '''
         PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX vivo:     <http://vivoweb.org/ontology/core#>
@@ -84,8 +98,11 @@ profiling_queries = {
               <{0}> rdfs:label ?label .
               OPTIONAL {{ <{0}> vivo:overview ?ovr .}}
         }}
-    ''',
-    'optional_profile_data_properties' : '''
+    '''
+    },
+    {
+    'name': 'optional_profile_data_properties',
+    'body': '''
         PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX vivo:     <http://vivoweb.org/ontology/core#>
@@ -115,8 +132,11 @@ profiling_queries = {
             OPTIONAL {{ <{0}> vivo:researchOverview ?res_over . }}
             OPTIONAL {{ <{0}> vivo:teachingOverview ?teach_over . }}
         }}
-    ''',
-    'optional_profile_data_properties_with_type' : '''
+    '''
+    },
+    {
+    'name': 'optional_profile_data_properties_with_type',
+    'body': '''
         PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX vivo:     <http://vivoweb.org/ontology/core#>
@@ -148,7 +168,8 @@ profiling_queries = {
             OPTIONAL {{ <{0}> vivo:teachingOverview ?teach_over . }}
         }}
     '''
-}
+    }
+]
 
 def summarize_json_data(jdata, uri):
     out = {'field_count': 0, 'fields': {}, 'pointers': [] }
@@ -171,34 +192,44 @@ def run_query(queryText, auth):
     out['elapsed_time'] = duration
     return out
 
-@app.route('/profiling')
-def query_profiling():
+@app.route('/profiling/run', methods=["POST"])
+def run_queries_for_profiling():
+    data = request.get_json()
+    queries = [ q for q in profiling_queries
+        if q['name'] in data['queries'] ]
+    batch = int(data['trials'])
     with open(os.path.join(dataDir, 'recent_shortids.csv'), 'r') as f:
         rdr = csv.reader(f)
         next(rdr) #skip header
         auth_ids = [ row[0] for row in rdr ]
-    queries = [ 'optional_profile_data_properties',
-        'optional_profile_data_properties_with_type' ]
     out = []
     random.shuffle(auth_ids)
     for e, q in enumerate(queries):
-        print('query: {}'.format(q))
+        print('query: {}'.format(q['name']))
         stats = { 'details': {},
             '_avg_time': 0, '_avg_fields': 0 }
-        batch = 5
         auths = auth_ids[batch*e:batch*e+batch]
         for auth in auths:
             print('....{}'.format(auth))
-            stats['details'][auth] = run_query(profiling_queries[q], auth)
+            stats['details'][auth] = run_query(q['body'], auth)
             stats['_avg_time'] += stats['details'][auth]['elapsed_time']
             stats['_avg_fields'] += stats['details'][auth]['field_count']
             time.sleep(1)
         stats['_avg_time'] = stats['_avg_time']/batch
         stats['_avg_fields'] = stats['_avg_fields']/batch
         stats['_secs/field'] = stats['_avg_time']/stats['_avg_fields']
-        out.append( (q, stats) )
+        out.append( (q['name'], stats) )
     out = sorted(out, key=lambda stat: stat[1]['_secs/field'])
     return jsonify([ { o[0]: o[1] } for o in out ])
+
+@app.route('/profiling')
+def query_profiling():
+    queries = [
+        {
+        'name': q['name'],
+        'body':q['body'].format('http://example.com') }
+            for q in profiling_queries ]
+    return render_template('query_profiling.html', queries=queries)
 
 @app.route('/')
 def index():
