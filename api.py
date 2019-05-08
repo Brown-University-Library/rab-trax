@@ -643,9 +643,9 @@ def get_weblinks(shortid):
     else:
         return {}
 
-@app.route('/profile/<shortid>')
-def profile_editor(shortid):
-    return render_template('profile.html', shortid=shortid)
+# @app.route('/profile/<shortid>')
+# def profile_editor(shortid):
+#     return render_template('profile.html', shortid=shortid)
 
 def rest_get_overview(shortid):
     query = '''
@@ -716,13 +716,43 @@ def rest_overview(shortId):
         return rest_get_overview(shortId)
     if request.method == 'POST':
         data = request.get_json()
-        return rest_update_overview(shortId, data['add'], None)
+        return rest_update_overview(shortId, data, None)
     if request.method == 'PUT':
         data = request.get_json()
-        return rest_update_overview(shortId, data['add'], data['remove'])
+        existing = rest_get_overview(shortId)
+        return rest_update_overview(shortId, data, existing)
     if request.method == 'DELETE':
         data = request.get_json()
-        return rest_update_overview(shortId, None, data['remove'])
+        existing = rest_get_overview(shortId)
+        return rest_update_overview(shortId, None, existing)
+
+def shortIdToUri(shortId):
+    return 'http://vivo.brown.edu/individual/{0}'.format(shortId)
+
+def signProfile(uri, jsonData):
+    data = {}
+    for jd in jsonData:
+        if jd['@id'] == uri:
+            data = jd
+            break
+
+def sparqlDescribe(uri):
+    query = 'DESCRIBE<{0}>'.format(uri)
+    headers = {'Accept': 'application/json', 'charset':'utf-8'}
+    data = { 'email': user, 'password': passw, 'query': query }
+    resp = requests.post(queryUrl, data=data, headers=headers)
+    if resp.status_code == 200:
+        return json.loads(resp.text)
+    else:
+        return {}
+
+@app.route('/profile/<shortId>', methods=['GET', 'PATCH'])
+def restProfile(shortId):
+    uri = shortIdToUri(shortId)
+    if request.method == 'GET':
+        return signProfile(uri, sparqlDescribe(uri))
+    elif request.method == 'PATCH':
+        return 'foo'
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
