@@ -673,7 +673,7 @@ def rest_get_overview(shortid):
         else:
             return {'overview': '' }
     else:
-        return {}
+        return { 'error': resp.text }
 
 def clean_literal(literal): 
     literal = literal.strip() 
@@ -704,8 +704,6 @@ def rest_update_overview(shortId, add, rmv):
     headers = {}
     data = { 'email': user, 'password': passw, 'update': query }
     resp = requests.post(updateUrl, data=data, headers=headers)
-    print("BODY\n---------------\n")
-    print(resp.request.body)
     return resp
 
 @app.route('/profile/<shortId>/overview',
