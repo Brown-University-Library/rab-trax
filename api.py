@@ -643,9 +643,9 @@ def get_weblinks(shortid):
     else:
         return {}
 
-# @app.route('/profile/<shortid>')
-# def profile_editor(shortid):
-#     return render_template('profile.html', shortid=shortid)
+@app.route('/profile/<shortid>')
+def profile_editor(shortid):
+    return render_template('profile.html', shortid=shortid)
 
 def rest_get_overview(shortid):
     query = '''
@@ -667,8 +667,9 @@ def rest_get_overview(shortid):
     if resp.status_code == 200:
         data = resp.json()
         if data:
-            return jsonify( parse_data_property(
-                data[0], 'http://vivoweb.org/ontology/core#overview'))
+            parsed = parse_data_property(
+                data[0], 'http://vivoweb.org/ontology/core#overview')
+            return {'overview': parsed }
         else:
             return ''
     else:
@@ -691,12 +692,8 @@ def rest_update_overview(shortId, add, rmv):
     PREFIX vivo:     <http://vivoweb.org/ontology/core#>
     PREFIX blocal:   <http://vivo.brown.edu/ontology/vivo-brown/>
     '''
-    del_cmd = '''DELETE DATA {{ GRAPH {0} {{
-        <http://vivo.brown.edu/individual/{1}> vivo:overview "{2}" . }}
-    }}'''
-    ins_cmd = '''INSERT DATA {{ GRAPH {0} {{
-        <http://vivo.brown.edu/individual/{1}> vivo:overview "{2}" . }}
-    }}'''
+    del_cmd = "DELETEDATA{{GRAPH{0}{{<http://vivo.brown.edu/individual/{1}>vivo:overview'''{2}'''.}}}}"
+    ins_cmd = "INSERTDATA{{GRAPH{0}{{<http://vivo.brown.edu/individual/{1}>vivo:overview'''{2}'''.}}}}"
     graph = '<http://vitro.mannlib.cornell.edu/default/vitro-kb-2>'
     if rmv:
         query += del_cmd.format(graph, shortId, rmv)
@@ -707,24 +704,35 @@ def rest_update_overview(shortId, add, rmv):
     headers = {}
     data = { 'email': user, 'password': passw, 'update': query }
     resp = requests.post(updateUrl, data=data, headers=headers)
-    return resp.text
+    print("BODY\n---------------\n")
+    print(resp.request.body)
+    return resp
 
 @app.route('/profile/<shortId>/overview',
     methods=['GET', 'POST', 'PUT', 'DELETE'])
 def rest_overview(shortId):
     if request.method == 'GET':
-        return rest_get_overview(shortId)
+        data = rest_get_overview(shortId)
+        return jsonify(data)
     if request.method == 'POST':
         data = request.get_json()
-        return rest_update_overview(shortId, data, None)
+        resp = rest_update_overview(shortId, data['overview'], None)
+        if resp.status_code == 200:
+            return jsonify(data)
+        else:
+            return jsonify({ 'error': resp.text })
     if request.method == 'PUT':
         data = request.get_json()
         existing = rest_get_overview(shortId)
-        return rest_update_overview(shortId, data, existing)
+        resp = rest_update_overview(shortId, data['overview'], existing['overview'])
+        if resp.status_code == 200:
+            return jsonify(data)
+        else:
+            return jsonify({ 'error': resp.text })
     if request.method == 'DELETE':
-        data = request.get_json()
         existing = rest_get_overview(shortId)
-        return rest_update_overview(shortId, None, existing)
+        resp = rest_update_overview(shortId, None, existing['overview'])
+        return jsonify({ 'message': resp.text })
 
 def shortIdToUri(shortId):
     return 'http://vivo.brown.edu/individual/{0}'.format(shortId)
@@ -746,13 +754,30 @@ def sparqlDescribe(uri):
     else:
         return {}
 
-@app.route('/profile/<shortId>', methods=['GET', 'PATCH'])
-def restProfile(shortId):
-    uri = shortIdToUri(shortId)
+@app.route('/texting/data',
+    methods=['GET', 'POST', 'PUT', 'DELETE'])
+def text_testing():
     if request.method == 'GET':
-        return signProfile(uri, sparqlDescribe(uri))
-    elif request.method == 'PATCH':
-        return 'foo'
+        data = rest_get_overview('eshih1')
+        return data
+    if request.method == 'POST':
+        data = request.get_json()
+        existing = rest_get_overview('eshih1').get_json()
+        body = 'add:"{0}" remove:"{1}"'.format(data, existing)
+        import ipdb; ipdb.set_trace()
+        return jsonify({})
+
+@app.route('/texting',methods=['GET'])
+def texting():
+    return render_template('flexbox.html')
+
+# @app.route('/profile/<shortId>', methods=['GET', 'PATCH'])
+# def restProfile(shortId):
+#     uri = shortIdToUri(shortId)
+#     if request.method == 'GET':
+#         return signProfile(uri, sparqlDescribe(uri))
+#     elif request.method == 'PATCH':
+#         return 'foo'
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
