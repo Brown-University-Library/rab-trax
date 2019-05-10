@@ -671,7 +671,7 @@ def rest_get_overview(shortid):
                 data[0], 'http://vivoweb.org/ontology/core#overview')
             return {'overview': parsed }
         else:
-            return ''
+            return {'overview': '' }
     else:
         return {}
 
