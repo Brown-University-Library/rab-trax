@@ -5,21 +5,15 @@ import json
 import time
 import random
 
-from flask import Flask, jsonify, render_template, request
+from flask import jsonify, render_template, request
 import requests
 
-app = Flask(__name__)
-app.config.from_pyfile('config/api.cfg')
+from rabtrax import app, sparqlz
 
-os.environ['QUERY'] = app.config['QUERY']
-os.environ['UPDATE'] = app.config['UPDATE']
-os.environ['USER'] = app.config['USER']
-os.environ['PASSW'] = app.config['PASSW']
-
-queryUrl = os.environ['QUERY']
-updateUrl = os.environ['UPDATE']
-user = os.environ['USER']
-passw = os.environ['PASSW']
+queryUrl = app.config['QUERY']
+updateUrl = app.config['UPDATE']
+user = app.config['USER']
+passw = app.config['PASSW']
 dataDir = app.config['DATA']
 
 def parse_data_property(jldObj, prop):
@@ -40,6 +34,7 @@ def parse_JSON_string(stringData):
 profiling_queries = [
     {
     'name': '10_faculty_with_labels',
+    'return': 'set',
     'body': '''
         PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
@@ -55,6 +50,7 @@ profiling_queries = [
     },
     {
     'name': 'generic_predicate_object',
+    'return': 'graph',
     'body': '''
         PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
@@ -68,6 +64,7 @@ profiling_queries = [
     },
     {
     'name': 'rdfs_label',
+    'return': 'graph',
     'body': '''
         PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
@@ -81,10 +78,12 @@ profiling_queries = [
     },
     {
     'name': 'describe',
+    'return': 'graph',
     'body': 'DESCRIBE <{0}>'
     },
     {
     'name': 'label_with_optional_overview',
+    'return': 'graph',
     'body': '''
         PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
@@ -102,6 +101,7 @@ profiling_queries = [
     },
     {
     'name': 'optional_profile_data_properties',
+    'return': 'graph',
     'body': '''
         PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
@@ -136,6 +136,7 @@ profiling_queries = [
     },
     {
     'name': 'optional_profile_data_properties_with_type',
+    'return': 'graph',
     'body': '''
         PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
@@ -168,27 +169,102 @@ profiling_queries = [
             OPTIONAL {{ <{0}> vivo:teachingOverview ?teach_over . }}
         }}
     '''
+    },
+    {
+    'name': 'describe_links_with_filtering',
+    'return': 'graph',
+    'body': '''
+        PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX owl:      <http://www.w3.org/2002/07/owl#>
+        DESCRIBE ?uri
+        WHERE {{
+            <{0}> ?p ?uri .
+            ?p rdf:type owl:ObjectProperty .
+        }}
+    '''
+    },
+    {
+    'name': 'describe_links',
+    'return': 'graph',
+    'body': '''
+        DESCRIBE ?uri
+        WHERE {{
+            <{0}> ?p ?uri .
+        }}
+    '''
+    },
+    {
+    'name': 'describe_links_rev',
+    'return': 'graph',
+    'body': '''
+        DESCRIBE ?uri
+        WHERE {{
+            ?uri ?p <{0}>.
+        }}
+    '''
+    },
+    {
+    'name': 'select_links_label',
+    'return': 'set',
+    'body': '''
+        PREFIX rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+        SELECT ?p ?uri ?label
+        WHERE {{
+            <{0}> ?p ?uri .
+            ?uri rdfs:label ?label .
+        }}
+    '''
     }
 ]
 
-def summarize_json_data(jdata, uri):
-    out = {'field_count': 0, 'fields': {}, 'pointers': [] }
-    for j in jdata:
-        if j['@id'] == uri:
-            out['fields'] = j
-        else:
-            out['pointers'].append(j['@id'])
-    out['field_count'] = len(out['fields'])
-    return out
+def parse_set_json(jdata):
+    rows = []
+    for j in jdata['results']['bindings']:
+        rows.append({ k: v['value'] for k, v in j.items() })
+    return len(rows)
 
-def run_query(queryText, auth):
+def parse_graph_json(jdata):
+    rows = []
+    for j in jdata:
+        uri = j['@id']
+        data = { k: len(v) if isinstance(v, list) else v for k,v in j.items() }
+        rows.append({ uri: data })
+    return rows
+
+def run_query(query, auth, accept='json'):
     uri = 'http://vivo.brown.edu/individual/{}'.format(auth)
-    headers = {'Accept': 'application/json', 'charset':'utf-8'}
-    data = { 'email': user, 'password': passw, 'query': queryText.format(uri) }
+    if query['return'] == 'set':
+        if accept == 'xml':
+            mime = 'application/sparql-results+xml'
+        else:
+            mime = 'application/sparql-results+json'
+    else:
+        if accept == 'xml':
+            mime = 'application/rdf+xml'
+        else:
+            mime = 'application/json'
+    headers = {'Accept': mime, 'charset':'utf-8'}
+    data = { 'email': user, 'password': passw, 'query': query['body'].format(uri) }
     start = time.process_time()
     resp = requests.post(queryUrl, data=data, headers=headers)
     duration = time.process_time() - start
-    out = summarize_json_data(json.loads(resp.text), uri)
+    if accept == 'json':
+        data = json.loads(resp.text)
+    else:
+        data = resp.text
+    out = {}
+    if query['return'] == 'set':
+        if accept == 'xml':
+            out['data'] = data
+        else:
+            out['data'] = parse_set_json(data)
+    else:
+        if accept == 'xml':
+            out['data'] = data
+        else:
+            out['data'] = parse_graph_json(data)
+    out['size'] = len(resp.text)
     out['elapsed_time'] = duration
     return out
 
@@ -207,22 +283,21 @@ def run_queries_for_profiling():
     for e, q in enumerate(queries):
         print('query: {}'.format(q['name']))
         stats = { 'details': {},
-            'avg_time': 0, 'avg_fields': 0 }
+            'avg_time': 0, 'avg_size': 0 }
         auths = auth_ids[batch*e:batch*e+batch]
         for auth in auths:
             print('....{}'.format(auth))
-            stats['details'][auth] = run_query(q['body'], auth)
+            stats['details'][auth] = run_query(q, auth, accept=data['accept'])
             stats['avg_time'] += stats['details'][auth]['elapsed_time']
-            stats['avg_fields'] += stats['details'][auth]['field_count']
+            stats['avg_size'] += stats['details'][auth]['size']
             time.sleep(1)
         stats['query'] = q['name']
-        stats['avg_time'] = stats['avg_time']/batch
-        stats['avg_fields'] = stats['avg_fields']/batch
-        stats['secs_per_field'] = format(stats['avg_time']/stats['avg_fields'], '.8g')
-        stats['avg_time'] = format(stats['avg_time'], '.8g')
-        stats['avg_fields'] = format(stats['avg_fields'], '.2f')
+        stats['avg_time'] = format(stats['avg_time']/batch, '.8g')
+        stats['avg_size'] = format(stats['avg_size']/batch, '.8g')
+        stats['details'] = json.dumps(
+            stats['details'], indent=4, sort_keys=True)
         out.append( stats )
-    out = sorted(out, key=lambda stat: stat['secs_per_field'])
+    out = sorted(out, key=lambda stat: stat['avg_time'])
     return jsonify( out )
 
 @app.route('/profiling')
@@ -735,47 +810,9 @@ def rest_overview(shortId):
 def shortIdToUri(shortId):
     return 'http://vivo.brown.edu/individual/{0}'.format(shortId)
 
-def signProfile(uri, jsonData):
-    data = {}
-    for jd in jsonData:
-        if jd['@id'] == uri:
-            data = jd
-            break
-
-def sparqlDescribe(uri):
-    query = 'DESCRIBE<{0}>'.format(uri)
-    headers = {'Accept': 'application/json', 'charset':'utf-8'}
-    data = { 'email': user, 'password': passw, 'query': query }
-    resp = requests.post(queryUrl, data=data, headers=headers)
-    if resp.status_code == 200:
-        return json.loads(resp.text)
-    else:
-        return {}
-
-@app.route('/texting/data',
-    methods=['GET', 'POST', 'PUT', 'DELETE'])
-def text_testing():
-    if request.method == 'GET':
-        data = rest_get_overview('eshih1')
-        return data
-    if request.method == 'POST':
-        data = request.get_json()
-        existing = rest_get_overview('eshih1').get_json()
-        body = 'add:"{0}" remove:"{1}"'.format(data, existing)
-        import ipdb; ipdb.set_trace()
-        return jsonify({})
-
-@app.route('/texting',methods=['GET'])
-def texting():
-    return render_template('flexbox.html')
-
-# @app.route('/profile/<shortId>', methods=['GET', 'PATCH'])
-# def restProfile(shortId):
-#     uri = shortIdToUri(shortId)
-#     if request.method == 'GET':
-#         return signProfile(uri, sparqlDescribe(uri))
-#     elif request.method == 'PATCH':
-#         return 'foo'
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0')
+@app.route('/data/<shortid>')
+def get_person_data(shortid):
+    start = time.process_time()
+    data = sparqlz.get(shortIdToUri(shortid))
+    duration = time.process_time() - start
+    return jsonify({ 'data': data, 'duration': duration })

@@ -59,7 +59,12 @@
 <div>
 <label for="num_trials"><strong>Trials</strong></label><br />
 <input type="number" id="num_trials" name="num_trials"
-       min="1" max="20" value="5">
+       min="1" max="50" value="5"><br />
+<label for="response_format"><strong>Response Format</strong></label><br />
+<select id="response_format">
+  <option value='json'>json</option>
+  <option value='xml'>xml</option>
+</select>
 </div>
 <div id="query_ctrl">
   <div id="select_query">
@@ -100,22 +105,23 @@
   <thead>
     <tr>
       <th>Query</th>
-      <th>Average Seconds / Field</th>
       <th>Average Time</th>
-      <th>Average Fields Returned</th>
+      <th>Average Size</th>
       <th></th>
     </tr>
   </thead>
   <tbody>
     <tr class="templates" id="result_row">
       <td class="query-name"></td>
-      <td class="query-time-ratio"></td>
       <td class="query-time-avg"></td>
-      <td class="query-field-avg"></td>
-      <td class="query-details"></td>
+      <td class="query-size-avg"></td>
+      <td class="query-details"><a>results</a></td>
     </tr>
   </tbody>
 </table>
+<ul id='results_data'>
+  <li class='templates' id="results_data-row"><pre></pre></li>
+</ul>
 </body>
 <script type="text/javascript">
   var $result_row;
@@ -124,13 +130,17 @@
   $(document).ready(function() {
     $result_row = $('#result_row').detach();
     $result_row.removeAttr('id').removeClass('templates');
+    $result_data = $('#results_data-row').detach();
+    $result_data.removeAttr('id').removeClass('templates');
   });
 
   var startProgress = function(numQueries, numTrials) {
     $progress = $('progress');
     $progress.attr('value', 0);
     $progress.attr('max', numQueries * numTrials);
-    intervalID = window.setInterval(updateProgress, 1000, $progress);
+    var intervalID = window.setInterval(updateProgress, 1000, $progress);
+
+    return intervalID;
   };
 
   function updateProgress($pbar) {
@@ -140,32 +150,41 @@
 
   var loadResults = function(results) {
     var $tbody = $('#query_results tbody');
+    var $datalist = $('#results_data');
     for (var i=0; i < results.length; i++) {
       var result = results[i];
       var $row = $result_row.clone();
       $row.find('.query-name').text(result['query']);
-      $row.find('.query-time-ratio').text(result['secs_per_field']);
       $row.find('.query-time-avg').text(result['avg_time']);
-      $row.find('.query-field-avg').text(result['avg_fields']);
+      $row.find('.query-size-avg').text(result['avg_size']);
+      $row.find('.query-details').find('a').attr(
+        'href', `#results_data-${result['query']}`);
       $tbody.append($row);
+
+      var $data = $result_data.clone();
+      $data.attr('id', `results_data-${result['query']}`)
+        .find('pre').html(result['details']);
+      $datalist.append($data);
     }
   };
 
 
   $('#select_query').on('click', 'button', function(e){
     e.preventDefault();
-    $('#view_query').find('pre').text($(this).next('p').text());
+    $('#view_query').find('#query_text').text($(this).next('p').text());
   });
   $('#run_queries').on( "submit", function(e){
     e.preventDefault();
-    $('pre').empty();
+    $('#query_text').empty();
     $('#query_results tbody').empty();
+    $('#results_data').empty();
     var data = {'queries': [], 'trials': 0};
     $('.query-options:checked').each(function(i) {
       data.queries.push($(this).val());
     })
     data.trials = $('#num_trials').val();
-    startProgress(data.queries.length, parseInt(data.trials));
+    data.accept = $('#response_format').val();
+    var intervalID = startProgress(data.queries.length, parseInt(data.trials));
     $.ajax({
       type: 'POST',
       url: "{{ url_for('run_queries_for_profiling')}}",
