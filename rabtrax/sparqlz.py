@@ -68,7 +68,10 @@ def describe(uri):
     else:
         return ''
 
-def get(uri):
+def get(uri, get_links=None):
     res = xmlToGraph(describe(uri))
-    links = xmlToGraph(describeLinks(uri))
+    if get_links:
+        links = xmlToGraph(describeLinks(uri))
+    else:
+        links = {}
     return { 'resource': res, 'links': links }

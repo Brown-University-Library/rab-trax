@@ -82,6 +82,11 @@ profiling_queries = [
     'body': 'DESCRIBE <{0}>'
     },
     {
+    'name': 'select',
+    'return': 'set',
+    'body': 'SELECT?p?o WHERE{{<{0}>?p?o.}}'
+    },
+    {
     'name': 'label_with_optional_overview',
     'return': 'graph',
     'body': '''
@@ -812,7 +817,8 @@ def shortIdToUri(shortId):
 
 @app.route('/data/<shortid>')
 def get_person_data(shortid):
+    full = request.args.get('full')
     start = time.process_time()
-    data = sparqlz.get(shortIdToUri(shortid))
+    data = sparqlz.get(shortIdToUri(shortid), full)
     duration = time.process_time() - start
     return jsonify({ 'data': data, 'duration': duration })
