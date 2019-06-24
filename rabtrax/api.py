@@ -851,6 +851,9 @@ property_map = {
     'research_overview' : 'http://vivoweb.org/ontology/core#researchOverview',
     'research_statement' : 'http://vivo.brown.edu/ontology/vivo-brown/researchStatement',
     'funded_research' : 'http://vivo.brown.edu/ontology/vivo-brown/fundedResearch',
+    'affiliations': 'http://vivo.brown.edu/ontology/vivo-brown/affiliations',
+    'awards_honors': 'http://vivo.brown.edu/ontology/vivo-brown/awardsAndHonors',
+    'teaching_overview': 'http://vivoweb.org/ontology/core#teachingOverview',
 
     'teacherFor': 'http://vivo.brown.edu/ontology/vivo-brown/teacherFor',
     'citation#contributorTo': 'http://vivo.brown.edu/ontology/citation#contributorTo',
@@ -878,13 +881,11 @@ property_map = {
     'core#preferredTitle': 'http://vivoweb.org/ontology/core#preferredTitle',
     'rdf-schema#label': 'http://www.w3.org/2000/01/rdf-schema#label',
     'alphaName': 'http://vivo.brown.edu/ontology/vivo-brown/alphaName',
-    'affiliations': 'http://vivo.brown.edu/ontology/vivo-brown/affiliations',
     'previousImage': 'http://vivo.brown.edu/ontology/vivo-brown/previousImage',
     'fullName': 'http://vivo.brown.edu/ontology/vivo-brown/fullName',
     'core#overview': 'http://vivoweb.org/ontology/core#overview',
     'core#teachingOverview': 'http://vivoweb.org/ontology/core#teachingOverview',
     'pubmedFirstName': 'http://vivo.brown.edu/ontology/vivo-brown/pubmedFirstName',
-    'awardsAndHonors': 'http://vivo.brown.edu/ontology/vivo-brown/awardsAndHonors',
     'drrbWebPage': 'http://vivo.brown.edu/ontology/vivo-brown/drrbWebPage',
     'primaryOrgLabel': 'http://vivo.brown.edu/ontology/vivo-brown/primaryOrgLabel',
     'firstName': 'http://xmlns.com/foaf/0.1/firstName',
@@ -902,12 +903,32 @@ def profile_research_overview(shortId):
     data = query_faculty(shortId)
     return jsonify({'research_overview': data[ property_map['research_overview'] ]})
 
+
 @app.route('/<shortId>/faculty/edit/research/statement/update')
 def profile_research_statement(shortId):
     data = query_faculty(shortId)
     return jsonify({'research_statement': data[ property_map['research_statement'] ]})
 
+
 @app.route('/<shortId>/faculty/edit/research/funded/update')
 def profile_funded_research(shortId):
     data = query_faculty(shortId)
     return jsonify({'funded_research': data[ property_map['funded_research'] ]})
+
+
+@app.route('/<shortId>/faculty/edit/background/honors/update')
+def profile_awards_honors(shortId):
+    data = query_faculty(shortId)
+    return jsonify({'awards_honors': data[ property_map['awards_honors'] ]})
+
+
+@app.route('/<shortId>/faculty/edit/affiliations/affiliations/update')
+def profile_affiliations(shortId):
+    data = query_faculty(shortId)
+    return jsonify({'affiliations': data[ property_map['affiliations'] ]})
+
+
+@app.route('/<shortId>/faculty/edit/teaching/overview/update')
+def profile_teaching_overview(shortId):
+    data = query_faculty(shortId)
+    return jsonify({'teaching_overview': data[ property_map['teaching_overview'] ]})
