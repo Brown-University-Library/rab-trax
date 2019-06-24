@@ -900,14 +900,14 @@ def profile_overview(shortId):
 @app.route('/<shortId>/faculty/edit/research/overview/update')
 def profile_research_overview(shortId):
     data = query_faculty(shortId)
-    return jsonify({'overview': data[ property_map['research_overview'] ]})
+    return jsonify({'research_overview': data[ property_map['research_overview'] ]})
 
 @app.route('/<shortId>/faculty/edit/research/statement/update')
 def profile_research_statement(shortId):
     data = query_faculty(shortId)
-    return jsonify({'overview': data[ property_map['research_statement'] ]})
+    return jsonify({'research_statement': data[ property_map['research_statement'] ]})
 
 @app.route('/<shortId>/faculty/edit/research/funded/update')
 def profile_funded_research(shortId):
     data = query_faculty(shortId)
-    return jsonify({'overview': data[ property_map['funded_research'] ]})
+    return jsonify({'funded_research': data[ property_map['funded_research'] ]})
