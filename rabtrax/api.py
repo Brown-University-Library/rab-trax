@@ -4,9 +4,11 @@ import os
 import json
 import time
 import random
+from collections import defaultdict
 
 from flask import jsonify, render_template, request
 import requests
+import SPARQLWrapper
 
 from rabtrax import app, sparqlz
 
@@ -822,3 +824,90 @@ def get_person_data(shortid):
     data = sparqlz.get(shortIdToUri(shortid), full)
     duration = time.process_time() - start
     return jsonify({ 'data': data, 'duration': duration })
+
+
+def get_faculty(shortid):
+    fac = Faculty.query.filter_by(shortid=shortid).first()
+    if fac:
+        return jsonify(fac.to_json())
+    return jsonify({})
+
+def query_faculty(shortId):
+    remote = SPARQLWrapper.SPARQLWrapper(queryUrl, updateUrl)
+    remote.addParameter('email', user)
+    remote.addParameter('password', passw)
+    remote.setMethod(SPARQLWrapper.POST)
+    remote.setQuery(
+        "DESCRIBE ?uri WHERE {{ VALUES ?uri {{ <{0}> }} }}".format(
+            shortIdToUri(shortId)) )
+    results = remote.queryAndConvert()
+    out = defaultdict(list)
+    for r in results.triples((None,None,None)):
+        out[r[1].toPython()].append(r[2].toPython())
+    return out
+
+property_map = {
+    'overview' : 'http://vivoweb.org/ontology/core#overview',
+    'research_overview' : 'http://vivoweb.org/ontology/core#researchOverview',
+    'research_statement' : 'http://vivo.brown.edu/ontology/vivo-brown/researchStatement',
+    'funded_research' : 'http://vivo.brown.edu/ontology/vivo-brown/fundedResearch',
+
+    'teacherFor': 'http://vivo.brown.edu/ontology/vivo-brown/teacherFor',
+    'citation#contributorTo': 'http://vivo.brown.edu/ontology/citation#contributorTo',
+    'fundedResearch': 'http://vivo.brown.edu/ontology/vivo-brown/fundedResearch',
+    'core#educationalTraining': 'http://vivoweb.org/ontology/core#educationalTraining',
+    'hasGeographicResearchArea': 'http://vivo.brown.edu/ontology/vivo-brown/hasGeographicResearchArea',
+    'core#researchOverview': 'http://vivoweb.org/ontology/core#researchOverview',
+    'lastName': 'http://xmlns.com/foaf/0.1/lastName',
+    'core#hasCollaborator': 'http://vivoweb.org/ontology/core#hasCollaborator',
+    'core#hasResearchArea': 'http://vivoweb.org/ontology/core#hasResearchArea',
+    'public#mainImage': 'http://vitro.mannlib.cornell.edu/ns/vitro/public#mainImage',
+    '22-rdf-syntax-ns#type': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+    '0.7#mostSpecificType': 'http://vitro.mannlib.cornell.edu/ns/vitro/0.7#mostSpecificType',
+    'pubmedLastName': 'http://vivo.brown.edu/ontology/vivo-brown/pubmedLastName',
+    'hasAffiliation': 'http://vivo.brown.edu/ontology/vivo-brown/hasAffiliation',
+    'researchStatement': 'http://vivo.brown.edu/ontology/vivo-brown/researchStatement',
+    'profileUpdated': 'http://vivo.brown.edu/ontology/vivo-brown/profileUpdated',
+    'core#primaryEmail': 'http://vivoweb.org/ontology/core#primaryEmail',
+    'cv': 'http://vivo.brown.edu/ontology/vivo-brown/cv',
+    'fisCreated': 'http://vivo.brown.edu/ontology/vivo-brown/fisCreated',
+    'shortId': 'http://vivo.brown.edu/ontology/vivo-brown/shortId',
+    'profile#hasTraining': 'http://vivo.brown.edu/ontology/profile#hasTraining',
+    'fisUpdated': 'http://vivo.brown.edu/ontology/vivo-brown/fisUpdated',
+    'core#personInPosition': 'http://vivoweb.org/ontology/core#personInPosition',
+    'core#preferredTitle': 'http://vivoweb.org/ontology/core#preferredTitle',
+    'rdf-schema#label': 'http://www.w3.org/2000/01/rdf-schema#label',
+    'alphaName': 'http://vivo.brown.edu/ontology/vivo-brown/alphaName',
+    'affiliations': 'http://vivo.brown.edu/ontology/vivo-brown/affiliations',
+    'previousImage': 'http://vivo.brown.edu/ontology/vivo-brown/previousImage',
+    'fullName': 'http://vivo.brown.edu/ontology/vivo-brown/fullName',
+    'core#overview': 'http://vivoweb.org/ontology/core#overview',
+    'core#teachingOverview': 'http://vivoweb.org/ontology/core#teachingOverview',
+    'pubmedFirstName': 'http://vivo.brown.edu/ontology/vivo-brown/pubmedFirstName',
+    'awardsAndHonors': 'http://vivo.brown.edu/ontology/vivo-brown/awardsAndHonors',
+    'drrbWebPage': 'http://vivo.brown.edu/ontology/vivo-brown/drrbWebPage',
+    'primaryOrgLabel': 'http://vivo.brown.edu/ontology/vivo-brown/primaryOrgLabel',
+    'firstName': 'http://xmlns.com/foaf/0.1/firstName',
+    'scholarlyWork': 'http://vivo.brown.edu/ontology/vivo-brown/scholarlyWork'
+}
+
+@app.route('/<shortId>/faculty/edit/overview/overview/update')
+def profile_overview(shortId):
+    data = query_faculty(shortId)
+    return jsonify({'overview': data[ property_map['overview'] ]})
+
+
+@app.route('/<shortId>/faculty/edit/research/overview/update')
+def profile_research_overview(shortId):
+    data = query_faculty(shortId)
+    return jsonify({'overview': data[ property_map['research_overview'] ]})
+
+@app.route('/<shortId>/faculty/edit/research/statement/update')
+def profile_research_statement(shortId):
+    data = query_faculty(shortId)
+    return jsonify({'overview': data[ property_map['research_statement'] ]})
+
+@app.route('/<shortId>/faculty/edit/research/funded/update')
+def profile_funded_research(shortId):
+    data = query_faculty(shortId)
+    return jsonify({'overview': data[ property_map['funded_research'] ]})
