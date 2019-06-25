@@ -29,22 +29,22 @@ property_map = {
     'teaching_overview' : 'http://vivoweb.org/ontology/core#teachingOverview',
     'label' : 'http://www.w3.org/2000/01/rdf-schema#label',
     'research_areas' : 'http://vivoweb.org/ontology/core#hasResearchArea',
+    'web_links': 'http://vivo.brown.edu/ontology/vivo-brown/drrbWebPage',
+    'link_text': 'http://vivoweb.org/ontology/core#linkAnchorText',
+    'link_url': 'http://vivoweb.org/ontology/core#linkURI',
+    'rank': 'http://vivoweb.org/ontology/core#rank',
 
     'teacherFor': 'http://vivo.brown.edu/ontology/vivo-brown/teacherFor',
     'citation#contributorTo': 'http://vivo.brown.edu/ontology/citation#contributorTo',
-    'fundedResearch': 'http://vivo.brown.edu/ontology/vivo-brown/fundedResearch',
     'core#educationalTraining': 'http://vivoweb.org/ontology/core#educationalTraining',
     'hasGeographicResearchArea': 'http://vivo.brown.edu/ontology/vivo-brown/hasGeographicResearchArea',
-    'core#researchOverview': 'http://vivoweb.org/ontology/core#researchOverview',
     'lastName': 'http://xmlns.com/foaf/0.1/lastName',
     'core#hasCollaborator': 'http://vivoweb.org/ontology/core#hasCollaborator',
-    'core#hasResearchArea': 'http://vivoweb.org/ontology/core#hasResearchArea',
     'public#mainImage': 'http://vitro.mannlib.cornell.edu/ns/vitro/public#mainImage',
     '22-rdf-syntax-ns#type': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
     '0.7#mostSpecificType': 'http://vitro.mannlib.cornell.edu/ns/vitro/0.7#mostSpecificType',
     'pubmedLastName': 'http://vivo.brown.edu/ontology/vivo-brown/pubmedLastName',
     'hasAffiliation': 'http://vivo.brown.edu/ontology/vivo-brown/hasAffiliation',
-    'researchStatement': 'http://vivo.brown.edu/ontology/vivo-brown/researchStatement',
     'profileUpdated': 'http://vivo.brown.edu/ontology/vivo-brown/profileUpdated',
     'core#primaryEmail': 'http://vivoweb.org/ontology/core#primaryEmail',
     'cv': 'http://vivo.brown.edu/ontology/vivo-brown/cv',
@@ -58,10 +58,7 @@ property_map = {
     'alphaName': 'http://vivo.brown.edu/ontology/vivo-brown/alphaName',
     'previousImage': 'http://vivo.brown.edu/ontology/vivo-brown/previousImage',
     'fullName': 'http://vivo.brown.edu/ontology/vivo-brown/fullName',
-    'core#overview': 'http://vivoweb.org/ontology/core#overview',
-    'core#teachingOverview': 'http://vivoweb.org/ontology/core#teachingOverview',
     'pubmedFirstName': 'http://vivo.brown.edu/ontology/vivo-brown/pubmedFirstName',
-    'drrbWebPage': 'http://vivo.brown.edu/ontology/vivo-brown/drrbWebPage',
     'primaryOrgLabel': 'http://vivo.brown.edu/ontology/vivo-brown/primaryOrgLabel',
     'firstName': 'http://xmlns.com/foaf/0.1/firstName',
     'scholarlyWork': 'http://vivo.brown.edu/ontology/vivo-brown/scholarlyWork'
@@ -155,3 +152,16 @@ def profile_research_area(shortId):
     return jsonify(
         { 'research_areas':
             [ { k: data[k][ property_map['label'] ] } for k in data ] })
+
+@app.route('/profile/<shortId>/faculty/edit/overview/ontheweb/update')
+def profile_web_links(shortId):
+    data = query_faculty_association(
+        shortId, property_map['web_links'])
+    text = property_map['link_text']
+    url = property_map['link_url']
+    rank = property_map['rank']
+    return jsonify(
+        { 'web_links': [ 
+            { k: {'text': data[k][text],
+            'url': data[k][url],
+            'rank': data[k][rank] } }for k in data ] })
