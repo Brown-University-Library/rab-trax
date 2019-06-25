@@ -153,7 +153,7 @@ def profile_research_area(shortId):
     return jsonify(
         { 'research_areas':
             [ { 'rabid': k,
-                'label': data[k][label][0] } for k in data ] })
+                'label': data[k].get(label,[''])[0] } for k in data ] })
 
 @app.route('/profile/<shortId>/faculty/edit/overview/ontheweb/update')
 def profile_web_links(shortId):
@@ -162,9 +162,10 @@ def profile_web_links(shortId):
     text = property_map['link_text']
     url = property_map['link_url']
     rank = property_map['rank']
-    return jsonify(
-        { 'web_links': [ {
-            'rabid': k,
-            'text': data[k][text][0],
-            'url': data[k][url][0],
-            'rank': data[k][rank][0] } for k in data ] })
+    if data:
+        return jsonify(
+            { 'web_links': [ {
+                'rabid': k,
+                'text': data[k].get(text,[''])[0],
+                'url': data[k].get(url,[''])[0],
+                'rank': data[k].get(rank,[''])[0] } for k in data ] })
