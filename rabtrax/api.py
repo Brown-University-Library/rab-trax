@@ -34,16 +34,20 @@ property_map = {
     'link_url' : 'http://vivoweb.org/ontology/core#linkURI',
     'rank' : 'http://vivoweb.org/ontology/core#rank',
     'collaborators' : 'http://vivoweb.org/ontology/core#hasCollaborator',
-    'training' : 'http://vivo.brown.edu/ontology/profile#hasTraining',
+    'trainings' : 'http://vivo.brown.edu/ontology/profile#hasTraining',
+    'credentials': 'http://vivo.brown.edu/ontology/profile#hasCredential',
+    'appointments': 'http://vivo.brown.edu/ontology/profile#hasAppointment',
     'start_date' : 'http://vivo.brown.edu/ontology/profile#startDate',
     'end_date' : 'http://vivo.brown.edu/ontology/profile#endDate',
-    'credentials': 'http://vivo.brown.edu/ontology/profile#hasCredential',
     'credential_number' : 'http://vivo.brown.edu/ontology/profile#credentialNumber',
     'credential_grantor' : 'http://vivo.brown.edu/ontology/profile#credentialGrantedBy',
     'specialty' : 'http://vivo.brown.edu/ontology/profile#hasSpecialty',
     'department' : 'http://vivo.brown.edu/ontology/profile#department',
     'hospital' : 'http://vivo.brown.edu/ontology/profile#hasHospital',
     'organization' : 'http://vivo.brown.edu/ontology/profile#hasOrganization',
+    'city' : 'http://vivo.brown.edu/ontology/profile#city',
+    'state' : 'http://vivo.brown.edu/ontology/profile#state',
+    'country' : 'http://vivo.brown.edu/ontology/profile#country',
 
     'teacherFor': 'http://vivo.brown.edu/ontology/vivo-brown/teacherFor',
     'citation#contributorTo': 'http://vivo.brown.edu/ontology/citation#contributorTo',
@@ -103,7 +107,7 @@ def query_credential(shortId):
         resources[r[0].toPython()][r[1].toPython()].append(r[2].toPython())
     fac = resources[uri]
     credentials = [ (cred, resources[cred]) for cred in
-        fac.get(property_map['credentials'], []) ]
+        fac.get(cred_prop, []) ]
     out = []
     for rabid, data in credentials:
         data['rabid'] = rabid
@@ -115,6 +119,90 @@ def query_credential(shortId):
             data[grant_prop] = [
                 { 'rabid': grant, 'label': resources[grant][label_prop] }
                     for grant in data[grant_prop] ]
+        out.append(data)
+    return out
+
+def query_appointment(shortId):
+    uri = shortIdToUri(shortId)
+    appt_prop = property_map['appointments']
+    hosp_prop = property_map['hospital']
+    org_prop = property_map['organization']
+    label_prop = property_map['label']
+    remote = SPARQLWrapper.SPARQLWrapper(queryUrl, updateUrl)
+    remote.addParameter('email', user)
+    remote.addParameter('password', passw)
+    remote.setMethod(SPARQLWrapper.POST)
+    remote.setQuery("""
+        DESCRIBE ?uri ?x1 ?x2 ?x3
+        WHERE {{
+          ?uri <{1}> ?x1 .
+          OPTIONAL {{?x1 <{2}> ?x2 .}}
+          OPTIONAL {{?x1 <{3}> ?x3 .}}
+          values ?uri {{ <{0}> }}
+        }}""".format(uri, appt_prop, hosp_prop, org_prop) )
+    results = remote.queryAndConvert()
+    resources = defaultdict(lambda: defaultdict(list))
+    for r in results.triples((None,None,None)):
+        resources[r[0].toPython()][r[1].toPython()].append(r[2].toPython())
+    fac = resources[uri]
+    appointments = [ (appt, resources[appt]) for appt in
+        fac.get(appt_prop, []) ]
+    out = []
+    for rabid, data in appointments:
+        data['rabid'] = rabid
+        if data.get(hosp_prop):
+            data[hosp_prop] = [
+                { 'rabid': hosp, 'label': resources[hosp][label_prop] }
+                    for hosp in data[hosp_prop] ]
+        if data.get(org_prop):
+            data[org_prop] = [
+                { 'rabid': org, 'label': resources[org][label_prop] }
+                    for org in data[org_prop] ]
+        out.append(data)
+    return out
+
+def query_training(shortId):
+    uri = shortIdToUri(shortId)
+    train_prop = property_map['trainings']
+    spec_prop = property_map['specialty']
+    hosp_prop = property_map['hospital']
+    org_prop = property_map['organization']
+    label_prop = property_map['label']
+    remote = SPARQLWrapper.SPARQLWrapper(queryUrl, updateUrl)
+    remote.addParameter('email', user)
+    remote.addParameter('password', passw)
+    remote.setMethod(SPARQLWrapper.POST)
+    remote.setQuery("""
+        DESCRIBE ?uri ?x1 ?x2 ?x3 ?x4
+        WHERE {{
+          ?uri <{1}> ?x1 .
+          OPTIONAL {{?x1 <{2}> ?x2 .}}
+          OPTIONAL {{?x1 <{3}> ?x3 .}}
+          OPTIONAL {{?x1 <{4}> ?x4 .}}
+          values ?uri {{ <{0}> }}
+        }}""".format(uri, train_prop, spec_prop, hosp_prop, org_prop) )
+    results = remote.queryAndConvert()
+    resources = defaultdict(lambda: defaultdict(list))
+    for r in results.triples((None,None,None)):
+        resources[r[0].toPython()][r[1].toPython()].append(r[2].toPython())
+    fac = resources[uri]
+    trainings = [ (train, resources[train]) for train in
+        fac.get(train_prop, []) ]
+    out = []
+    for rabid, data in trainings:
+        data['rabid'] = rabid
+        if data.get(spec_prop):
+            data[spec_prop] = [
+                { 'rabid': spec, 'label': resources[spec][label_prop] }
+                    for spec in data[spec_prop] ]
+        if data.get(hosp_prop):
+            data[hosp_prop] = [
+                { 'rabid': hosp, 'label': resources[hosp][label_prop] }
+                    for hosp in data[hosp_prop] ]
+        if data.get(org_prop):
+            data[org_prop] = [
+                { 'rabid': org, 'label': resources[org][label_prop] }
+                    for org in data[org_prop] ]
         out.append(data)
     return out
 
@@ -227,10 +315,11 @@ def profile_web_links(shortId):
             'url': data[k].get(url,[''])[0],
             'rank': data[k].get(rank,[''])[0] } for k in data ] })
 
-@app.route('/profile/<shortId>/faculty/edit/affiliations/credentials/update')
+@app.route('/profile/<shortId>/faculty/edit/affiliations/credential/update')
 def profile_credentials(shortId):
     credential = property_map['credentials']
     props = {
+        'rabid' : 'rabid',
         property_map['specialty']: 'specialty',
         property_map['credential_grantor']: 'granted_by',
         property_map['credential_number']: 'number',
@@ -239,6 +328,47 @@ def profile_credentials(shortId):
         property_map['label']: 'credential'
     }
     data = query_credential(shortId)
+    out = []
+    for d in data:
+        flt = { props[p]: d[p] for p in props if p in d }
+        out.append(flt)
+    return jsonify(out)
+
+@app.route('/profile/<shortId>/faculty/edit/affiliations/appointment/update')
+def profile_appointments(shortId):
+    appointment = property_map['appointments']
+    props = {
+        'rabid' : 'rabid',
+        property_map['hospital']: 'hospital',
+        property_map['organization']: 'organization',
+        property_map['department']: 'department',
+        property_map['start_date']: 'start',
+        property_map['end_date']: 'end',
+        property_map['label']: 'appointment'
+    }
+    data = query_appointment(shortId)
+    out = []
+    for d in data:
+        flt = { props[p]: d[p] for p in props if p in d }
+        out.append(flt)
+    return jsonify(out)
+
+@app.route('/profile/<shortId>/faculty/edit/background/training/update')
+def profile_training(shortId):
+    training = property_map['trainings']
+    props = {
+        'rabid' : 'rabid',
+        property_map['specialty']: 'specialty',
+        property_map['hospital']: 'hospital',
+        property_map['organization']: 'organization',
+        property_map['city']: 'city',
+        property_map['state']: 'state',
+        property_map['country']: 'country',
+        property_map['start_date']: 'start',
+        property_map['end_date']: 'end',
+        property_map['label']: 'training'
+    }
+    data = query_training(shortId)
     out = []
     for d in data:
         flt = { props[p]: d[p] for p in props if p in d }
