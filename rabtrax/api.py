@@ -281,7 +281,7 @@ def profile_collaborators(shortId):
         shortId, property_map['collaborators'])
     label = property_map['label']
     return jsonify(
-        { 'research_areas':
+        { 'collaborators':
             [ { 'rabid': k,
                 'label': data[k].get(label,[''])[0] } for k in data ] })
 
