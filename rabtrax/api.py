@@ -10,7 +10,7 @@ from flask import jsonify, render_template, request
 import requests
 import SPARQLWrapper
 
-from rabtrax import app, sparqlz
+from rabtrax import app, sparqlz, models
 
 queryUrl = app.config['QUERY']
 updateUrl = app.config['UPDATE']
@@ -226,80 +226,27 @@ def query_faculty_association(shortId, assocProp):
 
 
 def query_faculty(shortId):
+    uri = shortIdToUri(shortId)
     remote = SPARQLWrapper.SPARQLWrapper(queryUrl, updateUrl)
     remote.addParameter('email', user)
     remote.addParameter('password', passw)
     remote.setMethod(SPARQLWrapper.POST)
     remote.setQuery(
-        "DESCRIBE ?uri WHERE {{ VALUES ?uri {{ <{0}> }} }}".format(
-            shortIdToUri(shortId)) )
+        "DESCRIBE ?uri WHERE {{ VALUES ?uri {{ <{0}> }} }}".format(uri) )
     results = remote.queryAndConvert()
     out = defaultdict(list)
     for r in results.triples((None,None,None)):
         out[r[1].toPython()].append(r[2].toPython())
-    return out
+    profile = models.FacultyProfile(uri)
+    profile.load(out)
+    return profile
 
 
 @app.route('/profile/<shortId>/faculty/edit/overview/overview/update')
 def profile_overview(shortId):
-    data = query_faculty(shortId)
-    return jsonify({'overview': data[property_map['overview']][0] })
+    profile = query_faculty(shortId)
+    return jsonify({'overview': profile.overview[0] })
 
-
-@app.route('/profile/<shortId>/faculty/edit/research/overview/update')
-def profile_research_overview(shortId):
-    data = query_faculty(shortId)
-    return jsonify({'research_overview': data[property_map['research_overview']][0] })
-
-
-@app.route('/profile/<shortId>/faculty/edit/research/statement/update')
-def profile_research_statement(shortId):
-    data = query_faculty(shortId)
-    return jsonify({'research_statement': data[property_map['research_statement']][0] })
-
-
-@app.route('/profile/<shortId>/faculty/edit/research/funded/update')
-def profile_funded_research(shortId):
-    data = query_faculty(shortId)
-    return jsonify({'funded_research': data[property_map['funded_research']][0] })
-
-
-@app.route('/profile/<shortId>/faculty/edit/background/honors/update')
-def profile_awards_honors(shortId):
-    data = query_faculty(shortId)
-    return jsonify({'awards_honors': data[property_map['awards_honors']][0] })
-
-
-@app.route('/profile/<shortId>/faculty/edit/affiliations/affiliations/update')
-def profile_affiliations(shortId):
-    data = query_faculty(shortId)
-    return jsonify({'affiliations': data[property_map['affiliations']][0] })
-
-@app.route('/profile/<shortId>/faculty/edit/affiliations/collaborators/update')
-def profile_collaborators(shortId):
-    data = query_faculty_association(
-        shortId, property_map['collaborators'])
-    label = property_map['label']
-    return jsonify(
-        { 'collaborators':
-            [ { 'rabid': k,
-                'label': data[k].get(label,[''])[0] } for k in data ] })
-
-@app.route('/profile/<shortId>/faculty/edit/teaching/overview/update')
-def profile_teaching_overview(shortId):
-    data = query_faculty(shortId)
-    return jsonify({'teaching_overview': data[ property_map['teaching_overview']][0] })
-
-
-@app.route('/profile/<shortId>/faculty/edit/research/areas/update')
-def profile_research_area(shortId):
-    data = query_faculty_association(
-        shortId, property_map['research_areas'])
-    label = property_map['label']
-    return jsonify(
-        { 'research_areas':
-            [ { 'rabid': k,
-                'label': data[k].get(label,[''])[0] } for k in data ] })
 
 @app.route('/profile/<shortId>/faculty/edit/overview/ontheweb/update')
 def profile_web_links(shortId):
@@ -314,6 +261,88 @@ def profile_web_links(shortId):
             'text': data[k].get(text,[''])[0],
             'url': data[k].get(url,[''])[0],
             'rank': data[k].get(rank,[''])[0] } for k in data ] })
+
+
+@app.route('/profile/<shortId>/faculty/edit/background/training/update')
+def profile_training(shortId):
+    training = property_map['trainings']
+    props = {
+        'rabid' : 'rabid',
+        property_map['specialty']: 'specialty',
+        property_map['hospital']: 'hospital',
+        property_map['organization']: 'organization',
+        property_map['city']: 'city',
+        property_map['state']: 'state',
+        property_map['country']: 'country',
+        property_map['start_date']: 'start',
+        property_map['end_date']: 'end',
+        property_map['label']: 'training'
+    }
+    data = query_training(shortId)
+    out = []
+    for d in data:
+        flt = { props[p]: d[p] for p in props if p in d }
+        out.append(flt)
+    return jsonify(out)
+
+
+@app.route('/profile/<shortId>/faculty/edit/background/honors/update')
+def profile_awards_honors(shortId):
+    profile = query_faculty(shortId)
+    return jsonify({'awards_honors': profile.awards[0] })
+
+
+@app.route('/profile/<shortId>/faculty/edit/teaching/overview/update')
+def profile_teaching_overview(shortId):
+    profile = query_faculty(shortId)
+    return jsonify({'teaching_overview': profile.teaching_overview[0] })
+
+
+@app.route('/profile/<shortId>/faculty/edit/research/overview/update')
+def profile_research_overview(shortId):
+    profile = query_faculty(shortId)
+    return jsonify({'research_overview': profile.research_overview[0] })
+
+
+@app.route('/profile/<shortId>/faculty/edit/research/statement/update')
+def profile_research_statement(shortId):
+    profile = query_faculty(shortId)
+    return jsonify({'research_statement': profile.research_statement[0] })
+
+
+@app.route('/profile/<shortId>/faculty/edit/research/funded/update')
+def profile_funded_research(shortId):
+    profile = query_faculty(shortId)
+    return jsonify({'funded_research': profile.funded_research[0] })
+
+
+@app.route('/profile/<shortId>/faculty/edit/research/areas/update')
+def profile_research_area(shortId):
+    data = query_faculty_association(
+        shortId, property_map['research_areas'])
+    label = property_map['label']
+    return jsonify(
+        { 'research_areas':
+            [ { 'rabid': k,
+                'label': data[k].get(label,[''])[0] } for k in data ] })
+
+
+@app.route('/profile/<shortId>/faculty/edit/affiliations/affiliations/update')
+def profile_affiliations(shortId):
+    profile = query_faculty(shortId)
+    return jsonify({'affiliations': profile.affiliations[0] })
+
+
+@app.route('/profile/<shortId>/faculty/edit/affiliations/collaborators/update')
+def profile_collaborators(shortId):
+    data = query_faculty_association(
+        shortId, property_map['collaborators'])
+    label = property_map['label']
+    return jsonify(
+        { 'collaborators':
+            [ { 'rabid': k,
+                'label': data[k].get(label,[''])[0] } for k in data ] })
+
 
 @app.route('/profile/<shortId>/faculty/edit/affiliations/credential/update')
 def profile_credentials(shortId):
@@ -334,6 +363,7 @@ def profile_credentials(shortId):
         out.append(flt)
     return jsonify(out)
 
+
 @app.route('/profile/<shortId>/faculty/edit/affiliations/appointment/update')
 def profile_appointments(shortId):
     appointment = property_map['appointments']
@@ -347,28 +377,6 @@ def profile_appointments(shortId):
         property_map['label']: 'appointment'
     }
     data = query_appointment(shortId)
-    out = []
-    for d in data:
-        flt = { props[p]: d[p] for p in props if p in d }
-        out.append(flt)
-    return jsonify(out)
-
-@app.route('/profile/<shortId>/faculty/edit/background/training/update')
-def profile_training(shortId):
-    training = property_map['trainings']
-    props = {
-        'rabid' : 'rabid',
-        property_map['specialty']: 'specialty',
-        property_map['hospital']: 'hospital',
-        property_map['organization']: 'organization',
-        property_map['city']: 'city',
-        property_map['state']: 'state',
-        property_map['country']: 'country',
-        property_map['start_date']: 'start',
-        property_map['end_date']: 'end',
-        property_map['label']: 'training'
-    }
-    data = query_training(shortId)
     out = []
     for d in data:
         flt = { props[p]: d[p] for p in props if p in d }
