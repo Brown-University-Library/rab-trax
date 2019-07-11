@@ -77,11 +77,33 @@ property_map = {
     'scholarlyWork': 'http://vivo.brown.edu/ontology/vivo-brown/scholarlyWork'
 }
 
+
+def write_update_query(obj):
+    delete_template = u"DELETEDATA{{GRAPH{0}{{{1}}}}}"
+    insert_template = u"INSERTDATA{{GRAPH{0}{{{1}}}}}"
+    pbody = ""
+    delete_triples = ""
+    for triple in obj.remove:
+        delete_triples += write_statement(triple)
+    insert_triples = ""
+    for triple in obj.add:
+        insert_triples += write_statement(triple)
+    if delete_triples:
+        pbody += delete_template.format(obj.graph, delete_triples)
+    if delete_triples and insert_triples:
+        pbody += ";"
+    if insert_triples:
+        pbody += insert_template.format(obj.graph, insert_triples)
+    return pbody
+
+
 def shortIdToUri(shortId):
     return 'http://vivo.brown.edu/individual/{0}'.format(shortId)
 
-def write_triple(sbj, pred, obj):
-    return 'OPTIONAL {{ {0} {1} {2}. }}'.format(sbj, pred, obj)
+
+def write_statement(triple):
+    return "{0}{1}{2}.".format(*triple)
+
 
 def query_credential(shortId):
     uri = shortIdToUri(shortId)
@@ -122,6 +144,7 @@ def query_credential(shortId):
         out.append(data)
     return out
 
+
 def query_appointment(shortId):
     uri = shortIdToUri(shortId)
     appt_prop = property_map['appointments']
@@ -160,6 +183,7 @@ def query_appointment(shortId):
                     for org in data[org_prop] ]
         out.append(data)
     return out
+
 
 def query_training(shortId):
     uri = shortIdToUri(shortId)
@@ -206,6 +230,7 @@ def query_training(shortId):
         out.append(data)
     return out
 
+
 def query_faculty_association(shortId, assocProp):
     remote = SPARQLWrapper.SPARQLWrapper(queryUrl, updateUrl)
     remote.addParameter('email', user)
@@ -242,10 +267,35 @@ def query_faculty(shortId):
     return profile
 
 
-@app.route('/profile/<shortId>/faculty/edit/overview/overview/update')
-def profile_overview(shortId):
+def update_profile(profile):
+    if len(profile.add | profile.remove) == 0:
+        return '200 No update'
+    remote = SPARQLWrapper.SPARQLWrapper(updateUrl)
+    remote.addParameter('email', user)
+    remote.addParameter('password', passw)
+    remote.setMethod(SPARQLWrapper.POST)
+    remote.setQuery(write_update_query(profile))
+    results = remote.queryAndConvert().decode('utf-8')
+    return results
+
+
+@app.route('/profile/<shortId>/faculty/edit/overview/overview/')
+def get_overview(shortId):
     profile = query_faculty(shortId)
     return jsonify({'overview': profile.overview[0] })
+
+
+@app.route('/profile/<shortId>/faculty/edit/overview/overview/update',
+    methods=['POST'])
+def update_overview(shortId):
+    data = request.get_json(force=True)
+    profile = query_faculty(shortId)
+    profile.update('overview', [ data['overview'] ] )
+    results = update_profile(profile)
+    if '200' in results:
+        return jsonify({'overview': profile.overview[0] })
+    else:
+        return jsonify({'error': 'I\'m working on it!'})
 
 
 @app.route('/profile/<shortId>/faculty/edit/overview/ontheweb/update')

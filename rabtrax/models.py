@@ -1,6 +1,16 @@
+import rdflib
+import json
+
 BPROFILE = 'http://vivo.brown.edu/ontology/profile#'
 VIVO = 'http://vivoweb.org/ontology/core#'
 BLOCAL = 'http://vivo.brown.edu/ontology/vivo-brown/'
+
+
+def rdf_string(data, dataType):
+    if dataType == 'uri':
+        return '<{}>'.format(data)
+    else:
+        return json.dumps(data)
 
 class FacultyProfile:
 
@@ -24,10 +34,69 @@ class FacultyProfile:
         BLOCAL + 'hasGeographicResearchArea': 'geo_research_areas'
     }
 
+    __attribute_map = {
+        'show_visualizations': BPROFILE + 'consentsVisualizations',
+        'overview': VIVO + 'overview',
+        'affiliations': BLOCAL + 'affiliations',
+        'awards': BLOCAL + 'awardsAndHonors',
+        'scholarly_work': BLOCAL + 'scholarlyWork',
+        'research_overview': VIVO + 'researchOverview',
+        'funded_research': BLOCAL + 'fundedResearch',
+        'web_links': BLOCAL + 'drrbWebPage',
+        'research_statement': BLOCAL + 'researchStatement',
+        'teaching_overview': VIVO + 'teachingOverview',
+        'appointments': BPROFILE + 'hasAppointment',
+        'collaborators': VIVO + 'hasCollaborator',
+        'research_areas': VIVO + 'hasResearchArea',
+        'credentials': BPROFILE + 'hasCredential',
+        'trainings': BPROFILE + 'hasTraining',
+        'delegates': BLOCAL + 'hasDelegate',
+        'geo_research_areas': BLOCAL + 'hasGeographicResearchArea'
+    }
+
+    __attribute_type = {
+        'show_visualizations': 'boolean',
+        'overview': 'literal',
+        'affiliations': 'literal',
+        'awards': 'literal',
+        'scholarly_work': 'literal',
+        'research_overview': 'literal',
+        'funded_research': 'literal',
+        'web_links': 'web_links',
+        'research_statement': 'literal',
+        'teaching_overview': 'literal',
+        'appointments': 'appointments',
+        'collaborators': 'collaborators',
+        'research_areas': 'research_areas',
+        'credentials': 'credentials',
+        'trainings': 'trainings',
+        'delegates': 'delegates',
+        'geo_research_areas': 'geo_research_areas'
+    }
+
     def __init__(self, uri):
         self.uri = uri
+        self.graph = '<http://vitro.mannlib.cornell.edu/default/vitro-kb-2>'
+        self.data = {}
+        self.add = set()
+        self.remove = set()
 
     def load(self, data):
         for d in data:
             if d in self.__property_map:
                 self.__dict__[self.__property_map[d]] = data[d]
+                self.data[d] = data[d]
+
+    def format_triple(self, attr, data):
+        return ( rdf_string(self.uri, 'uri'),
+            rdf_string(self.__attribute_map[attr], 'uri'),
+            rdf_string(data, self.__attribute_type[attr]) )
+
+    def update(self, attr, data):
+        if data == getattr(self, attr):
+            return
+        add = { self.format_triple(attr, d) for d in data }
+        rmv = { self.format_triple(attr, d) for d in getattr(self, attr) }
+        self.add |= (add - rmv)
+        self.remove |= (rmv - add)
+        setattr(self, attr, data)
