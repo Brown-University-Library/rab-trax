@@ -279,7 +279,8 @@ def update_profile(profile):
     return results
 
 
-@app.route('/profile/<shortId>/faculty/edit/overview/overview/')
+@app.route('/profile/<shortId>/faculty/edit/overview/overview',
+    methods=['GET'])
 def get_overview(shortId):
     profile = query_faculty(shortId)
     return jsonify({'overview': profile.overview[0] })
@@ -336,34 +337,124 @@ def profile_training(shortId):
     return jsonify(out)
 
 
-@app.route('/profile/<shortId>/faculty/edit/background/honors/update')
-def profile_awards_honors(shortId):
+@app.route('/profile/<shortId>/faculty/edit/background/honors',
+    methods=['GET'])
+def get_awards_honors(shortId):
     profile = query_faculty(shortId)
     return jsonify({'awards_honors': profile.awards[0] })
 
 
-@app.route('/profile/<shortId>/faculty/edit/teaching/overview/update')
-def profile_teaching_overview(shortId):
+@app.route('/profile/<shortId>/faculty/edit/background/honors/update',
+    methods=['POST'])
+def update_awards_honors(shortId):
+    data = request.get_json(force=True)
+    profile = query_faculty(shortId)
+    profile.update('awards_honors', [ data['awards_honors'] ] )
+    results = update_profile(profile)
+    if '200' in results:
+        return jsonify({'awards_honors': profile.awards_honors[0] })
+    else:
+        return jsonify({'error': 'I\'m working on it!'})
+
+
+@app.route('/profile/<shortId>/faculty/edit/teaching/overview',
+    methods=['GET'])
+def get_teaching_overview(shortId):
     profile = query_faculty(shortId)
     return jsonify({'teaching_overview': profile.teaching_overview[0] })
 
 
-@app.route('/profile/<shortId>/faculty/edit/research/overview/update')
-def profile_research_overview(shortId):
+@app.route('/profile/<shortId>/faculty/edit/teaching/overview/update',
+    methods=['POST'])
+def update_teaching_overview(shortId):
+    data = request.get_json(force=True)
+    profile = query_faculty(shortId)
+    profile.update('teaching_overview', [ data['teaching_overview'] ] )
+    results = update_profile(profile)
+    if '200' in results:
+        return jsonify({'teaching_overview': profile.teaching_overview[0] })
+    else:
+        return jsonify({'error': 'I\'m working on it!'})
+
+
+@app.route('/profile/<shortId>/faculty/edit/research/overview',
+    methods=['GET'])
+def get_research_overview(shortId):
     profile = query_faculty(shortId)
     return jsonify({'research_overview': profile.research_overview[0] })
 
 
-@app.route('/profile/<shortId>/faculty/edit/research/statement/update')
-def profile_research_statement(shortId):
+@app.route('/profile/<shortId>/faculty/edit/research/overview/update',
+    methods=['POST'])
+def update_research_overview(shortId):
+    data = request.get_json(force=True)
+    profile = query_faculty(shortId)
+    profile.update('research_overview', [ data['research_overview'] ] )
+    results = update_profile(profile)
+    if '200' in results:
+        return jsonify({'research_overview': profile.research_overview[0] })
+    else:
+        return jsonify({'error': 'I\'m working on it!'})
+
+
+@app.route('/profile/<shortId>/faculty/edit/research/statement',
+    methods=['GET'])
+def get_research_statement(shortId):
     profile = query_faculty(shortId)
     return jsonify({'research_statement': profile.research_statement[0] })
 
 
-@app.route('/profile/<shortId>/faculty/edit/research/funded/update')
-def profile_funded_research(shortId):
+@app.route('/profile/<shortId>/faculty/edit/research/statement/update',
+    methods=['POST'])
+def update_research_statement(shortId):
+    data = request.get_json(force=True)
+    profile = query_faculty(shortId)
+    profile.update('research_statement', [ data['research_statement'] ] )
+    results = update_profile(profile)
+    if '200' in results:
+        return jsonify({'research_statement': profile.research_statement[0] })
+    else:
+        return jsonify({'error': 'I\'m working on it!'})
+
+
+@app.route('/profile/<shortId>/faculty/edit/research/funded',
+    methods=['GET'])
+def get_funded_research(shortId):
     profile = query_faculty(shortId)
     return jsonify({'funded_research': profile.funded_research[0] })
+
+
+@app.route('/profile/<shortId>/faculty/edit/research/funded/update',
+    methods=['POST'])
+def update_funded_research(shortId):
+    data = request.get_json(force=True)
+    profile = query_faculty(shortId)
+    profile.update('funded_research', [ data['funded_research'] ] )
+    results = update_profile(profile)
+    if '200' in results:
+        return jsonify({'funded_research': profile.funded_research[0] })
+    else:
+        return jsonify({'error': 'I\'m working on it!'})
+
+
+@app.route('/profile/<shortId>/faculty/edit/research/scholarly',
+    methods=['GET'])
+def get_scholarly_work(shortId):
+    profile = query_faculty(shortId)
+    return jsonify({'scholarly_work': profile.scholarly_work[0] })
+
+
+@app.route('/profile/<shortId>/faculty/edit/research/scholarly/update',
+    methods=['POST'])
+def update_scholarly_work(shortId):
+    data = request.get_json(force=True)
+    profile = query_faculty(shortId)
+    profile.update('scholarly_work', [ data['scholarly_work'] ] )
+    results = update_profile(profile)
+    if '200' in results:
+        return jsonify({'scholarly_work': profile.scholarly_work[0] })
+    else:
+        return jsonify({'error': 'I\'m working on it!'})
 
 
 @app.route('/profile/<shortId>/faculty/edit/research/areas/update')
@@ -377,10 +468,24 @@ def profile_research_area(shortId):
                 'label': data[k].get(label,[''])[0] } for k in data ] })
 
 
-@app.route('/profile/<shortId>/faculty/edit/affiliations/affiliations/update')
-def profile_affiliations(shortId):
+@app.route('/profile/<shortId>/faculty/edit/affiliations/affiliations',
+    methods=['GET'])
+def get_affiliations(shortId):
     profile = query_faculty(shortId)
     return jsonify({'affiliations': profile.affiliations[0] })
+
+
+@app.route('/profile/<shortId>/faculty/edit/affiliations/affiliations/update',
+    methods=['POST'])
+def update_affiliations(shortId):
+    data = request.get_json(force=True)
+    profile = query_faculty(shortId)
+    profile.update('affiliations', [ data['affiliations'] ] )
+    results = update_profile(profile)
+    if '200' in results:
+        return jsonify({'affiliations': profile.affiliations[0] })
+    else:
+        return jsonify({'error': 'I\'m working on it!'})
 
 
 @app.route('/profile/<shortId>/faculty/edit/affiliations/collaborators/update')
