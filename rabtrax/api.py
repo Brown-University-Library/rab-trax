@@ -250,6 +250,33 @@ def query_faculty_association(shortId, assocProp):
     return out
 
 
+def query_research_areas(shortId):
+    uri = shortIdToUri(shortId)
+    remote = SPARQLWrapper.SPARQLWrapper(queryUrl, updateUrl)
+    remote.addParameter('email', user)
+    remote.addParameter('password', passw)
+    remote.setMethod(SPARQLWrapper.POST)
+    remote.setQuery(
+        """
+        PREFIX vivo: <http://vivoweb.org/ontology/core#>
+        DESCRIBE ?ra
+        WHERE {{
+        ?ra vivo:researchAreaOf ?uri .
+        VALUES ?uri {{ <{0}> }}
+        }}
+        """.format(uri) )
+    results = remote.queryAndConvert()
+    resources = defaultdict(lambda: defaultdict(list))
+    for r in results.triples((None,None,None)):
+        resources[r[0].toPython()][r[1].toPython()].append(r[2].toPython())
+    out = []
+    for r in resources:
+        res = models.ResearchArea(uri=r)
+        res.load(resources[r])
+        out.append(res)
+    return out
+
+
 def query_faculty(shortId):
     uri = shortIdToUri(shortId)
     remote = SPARQLWrapper.SPARQLWrapper(queryUrl, updateUrl)
@@ -297,6 +324,38 @@ def update_overview(shortId):
         return jsonify({'overview': profile.overview[0] })
     else:
         return jsonify({'error': 'I\'m working on it!'})
+
+
+@app.route('/profile/<shortId>/faculty/edit/overview/research-areas',
+    methods=['GET'])
+def get_research_areas(shortId):
+    data = query_research_areas(shortId)
+    return jsonify( { 'research_areas': [
+        { 'rabid': ra.uri, 'label': ra.name[0] } for ra in data ] } )
+
+
+@app.route('/profile/<shortId>/faculty/edit/overview/research-areas/add',
+    methods=['POST'])
+def add_research_areas(shortId):
+    data = request.get_json(force=True)
+    existing = query_research_areas(shortId)
+    label = property_map['label']
+    return jsonify(
+        { 'research_areas':
+            [ { 'rabid': k,
+                'label': data[k].get(label,[''])[0] } for k in data ] })
+
+
+@app.route('/profile/<shortId>/faculty/edit/overview/research-areas/delete',
+    methods=['POST'])
+def remove_research_areas(shortId):
+    data = query_faculty_association(
+        shortId, property_map['research_areas'])
+    label = property_map['label']
+    return jsonify(
+        { 'research_areas':
+            [ { 'rabid': k,
+                'label': data[k].get(label,[''])[0] } for k in data ] })
 
 
 @app.route('/profile/<shortId>/faculty/edit/overview/ontheweb/update')
@@ -455,17 +514,6 @@ def update_scholarly_work(shortId):
         return jsonify({'scholarly_work': profile.scholarly_work[0] })
     else:
         return jsonify({'error': 'I\'m working on it!'})
-
-
-@app.route('/profile/<shortId>/faculty/edit/research/areas/update')
-def profile_research_area(shortId):
-    data = query_faculty_association(
-        shortId, property_map['research_areas'])
-    label = property_map['label']
-    return jsonify(
-        { 'research_areas':
-            [ { 'rabid': k,
-                'label': data[k].get(label,[''])[0] } for k in data ] })
 
 
 @app.route('/profile/<shortId>/faculty/edit/affiliations/affiliations',

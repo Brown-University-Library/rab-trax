@@ -4,6 +4,7 @@ import json
 BPROFILE = 'http://vivo.brown.edu/ontology/profile#'
 VIVO = 'http://vivoweb.org/ontology/core#'
 BLOCAL = 'http://vivo.brown.edu/ontology/vivo-brown/'
+RDFS = 'http://www.w3.org/2000/01/rdf-schema#'
 
 
 def rdf_string(data, dataType):
@@ -75,6 +76,50 @@ class FacultyProfile:
     }
 
     def __init__(self, uri):
+        self.uri = uri
+        self.graph = '<http://vitro.mannlib.cornell.edu/default/vitro-kb-2>'
+        self.data = {}
+        self.add = set()
+        self.remove = set()
+
+    def load(self, data):
+        for d in data:
+            if d in self.__property_map:
+                self.__dict__[self.__property_map[d]] = data[d]
+                self.data[d] = data[d]
+
+    def format_triple(self, attr, data):
+        return ( rdf_string(self.uri, 'uri'),
+            rdf_string(self.__attribute_map[attr], 'uri'),
+            rdf_string(data, self.__attribute_type[attr]) )
+
+    def update(self, attr, data):
+        if data == getattr(self, attr):
+            return
+        add = { self.format_triple(attr, d) for d in data }
+        rmv = { self.format_triple(attr, d) for d in getattr(self, attr) }
+        self.add |= (add - rmv)
+        self.remove |= (rmv - add)
+        setattr(self, attr, data)
+
+class ResearchArea:
+
+    __property_map = {
+        VIVO + 'researchAreaOf': 'faculty',
+        RDFS + 'label': 'name'
+    }
+
+    __attribute_map = {
+        'faculty': VIVO + 'researchAreaOf',
+        'name': RDFS + 'label'
+    }
+
+    __attribute_type = {
+        'faculty': 'uri',
+        'name': 'literal'
+    }
+
+    def __init__(self, uri=None):
         self.uri = uri
         self.graph = '<http://vitro.mannlib.cornell.edu/default/vitro-kb-2>'
         self.data = {}
