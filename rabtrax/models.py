@@ -102,6 +102,10 @@ class FacultyProfile:
         self.remove |= (rmv - add)
         setattr(self, attr, data)
 
+    def to_dict(self):
+        return { a: self.__dict__.get(a, []) for a in self.__attribute_map }
+
+
 class ResearchArea:
 
     __property_map = {
@@ -145,3 +149,6 @@ class ResearchArea:
         self.add |= (add - rmv)
         self.remove |= (rmv - add)
         setattr(self, attr, data)
+
+    def to_dict(self):
+        return { a: self.__dict__.get(a, []) for a in self.__attribute_map }

@@ -250,21 +250,44 @@ def query_faculty_association(shortId, assocProp):
     return out
 
 
-def query_research_areas(shortId):
-    uri = shortIdToUri(shortId)
+def make_filter(var, prop, ovar, val):
+    out = {}
+    if prop:
+        out['filter'] = '{0}{1}{2}. '.format(var,prop,ovar)
+    if val:
+        out['values'] = 'VALUES {0} {{ {1} }} '.format(ovar,val)
+    return out
+
+
+def query_research_areas(uris=None, faculty=None, name=None):
+    filters = []
+    if faculty:
+        filters.append(
+            make_filter('?ra',
+                '<http://vivoweb.org/ontology/core#researchAreaOf>',
+                '?fac',
+                '<{}>'.format(faculty) ) )
+    if name:
+        filters.append(
+            make_filter('?ra',
+                '<http://www.w3.org/2000/01/rdf-schema#label>',
+                '?name',
+                '"{}"'.format(name) ) )
+    if uris:
+        filters.append(
+            make_filter(None,None,'?ra',''.join( ['<{}>'.format(u) for u in uris ]) ) )
+    query = """
+        PREFIX blocal: <http://vivo.brown.edu/ontology/vivo-brown/>
+        DESCRIBE ?ra
+        WHERE {{ ?ra a blocal:ResearchArea. {0}{1} }}
+        """.format(''.join([ f['filter'] for f in filters if f.get('filter') ]),
+         ''.join([ f['values'] for f in filters if f.get('values') ]) )
+    print(query)
     remote = SPARQLWrapper.SPARQLWrapper(queryUrl, updateUrl)
     remote.addParameter('email', user)
     remote.addParameter('password', passw)
     remote.setMethod(SPARQLWrapper.POST)
-    remote.setQuery(
-        """
-        PREFIX vivo: <http://vivoweb.org/ontology/core#>
-        DESCRIBE ?ra
-        WHERE {{
-        ?ra vivo:researchAreaOf ?uri .
-        VALUES ?uri {{ <{0}> }}
-        }}
-        """.format(uri) )
+    remote.setQuery( query )
     results = remote.queryAndConvert()
     resources = defaultdict(lambda: defaultdict(list))
     for r in results.triples((None,None,None)):
@@ -329,7 +352,8 @@ def update_overview(shortId):
 @app.route('/profile/<shortId>/faculty/edit/overview/research-areas',
     methods=['GET'])
 def get_research_areas(shortId):
-    data = query_research_areas(shortId)
+    uri = shortIdToUri(shortId)
+    data = query_research_areas(faculty=uri)
     return jsonify( { 'research_areas': [
         { 'rabid': ra.uri, 'label': ra.name[0] } for ra in data ] } )
 
@@ -338,12 +362,26 @@ def get_research_areas(shortId):
     methods=['POST'])
 def add_research_areas(shortId):
     data = request.get_json(force=True)
-    existing = query_research_areas(shortId)
-    label = property_map['label']
+    profile = query_faculty(shortId)
+    ras = query_research_areas(uris=profile.research_areas)
     return jsonify(
-        { 'research_areas':
-            [ { 'rabid': k,
-                'label': data[k].get(label,[''])[0] } for k in data ] })
+        { 'profile': profile.to_dict(),
+        'ras': [ r.to_dict() for r in ras ] })
+    for ra in ras:
+        if data['name'] == ra.name[0]:
+            return jsonify({ 'rabid': ra.uri })
+    existing = query_research_areas(name=data['name'])
+    if not existing:
+        ra = create_research_area(data['name'])
+    else:
+        ra = existing[0]
+    profile.update('research_areas', ra)
+    ra.update('faculty', profile)
+    results = updateModels([ra, profile])
+    if '200' in results:
+        return jsonify({'rabid': ra.uri })
+    else:
+        return jsonify({'error': 'I\'m working on it!'})
 
 
 @app.route('/profile/<shortId>/faculty/edit/overview/research-areas/delete',
