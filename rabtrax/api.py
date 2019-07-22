@@ -4,6 +4,7 @@ import os
 import json
 import time
 import random
+import uuid
 from collections import defaultdict
 
 from flask import jsonify, render_template, request
@@ -83,18 +84,41 @@ def write_update_query(obj):
     insert_template = u"INSERTDATA{{GRAPH{0}{{{1}}}}}"
     pbody = ""
     delete_triples = ""
-    for triple in obj.remove:
+    for triple in obj['remove']:
         delete_triples += write_statement(triple)
     insert_triples = ""
-    for triple in obj.add:
+    for triple in obj['add']:
         insert_triples += write_statement(triple)
     if delete_triples:
-        pbody += delete_template.format(obj.graph, delete_triples)
+        pbody += delete_template.format(obj['graph'], delete_triples)
     if delete_triples and insert_triples:
         pbody += ";"
     if insert_triples:
-        pbody += insert_template.format(obj.graph, insert_triples)
+        pbody += insert_template.format(obj['graph'], insert_triples)
     return pbody
+
+
+def update_models(models):
+    add = set()
+    rmv = set()
+    graphs = set()
+    for m in models:
+        graphs.add(m.graph)
+        add |= m.add
+        rmv |= m.remove
+    if len(graphs) != 1 :
+        raise Exception('Cannot update by named graph')
+    if len(add | rmv) == 0:
+        return '200 No update'
+    query = write_update_query( {'add': (add - rmv),
+        'remove': (rmv - add), 'graph': graphs.pop() })
+    remote = SPARQLWrapper.SPARQLWrapper(updateUrl)
+    remote.addParameter('email', user)
+    remote.addParameter('password', passw)
+    remote.setMethod(SPARQLWrapper.POST)
+    remote.setQuery(query)
+    results = remote.queryAndConvert().decode('utf-8')
+    return results
 
 
 def shortIdToUri(shortId):
@@ -250,6 +274,27 @@ def query_faculty_association(shortId, assocProp):
     return out
 
 
+def mint_uri():
+    qtext = "ASK WHERE {{ {{ <{0}> ?p ?o. }} UNION {{ ?s ?p2 <{0}> }} }}"
+    remote = SPARQLWrapper.SPARQLWrapper(queryUrl, updateUrl)
+    remote.setReturnFormat('json')
+    remote.addParameter('email', user)
+    remote.addParameter('password', passw)
+    remote.setMethod(SPARQLWrapper.POST)
+    new_uri = False
+    tries = 0
+    while not new_uri and tries < 50:
+        uri = 'http://vivo.brown.edu/individual/n{}'.format(
+            uuid.uuid4().hex)
+        remote.setQuery( qtext.format(uri) )
+        resp = remote.queryAndConvert()
+        if not resp['boolean']:
+            new_uri = uri
+        else:
+            tries += 1
+    return new_uri
+
+
 def make_filter(var, prop, ovar, val):
     out = {}
     if prop:
@@ -272,17 +317,16 @@ def query_research_areas(uris=None, faculty=None, name=None):
             make_filter('?ra',
                 '<http://www.w3.org/2000/01/rdf-schema#label>',
                 '?name',
-                '"{}"'.format(name) ) )
+                '{}'.format(json.dumps(name)) ) )
     if uris:
         filters.append(
             make_filter(None,None,'?ra',''.join( ['<{}>'.format(u) for u in uris ]) ) )
     query = """
         PREFIX blocal: <http://vivo.brown.edu/ontology/vivo-brown/>
         DESCRIBE ?ra
-        WHERE {{ ?ra a blocal:ResearchArea. {0}{1} }}
+        WHERE {{ ?ra a blocal:ResearchArea . {0} {1} }}
         """.format(''.join([ f['filter'] for f in filters if f.get('filter') ]),
          ''.join([ f['values'] for f in filters if f.get('values') ]) )
-    print(query)
     remote = SPARQLWrapper.SPARQLWrapper(queryUrl, updateUrl)
     remote.addParameter('email', user)
     remote.addParameter('password', passw)
@@ -364,20 +408,25 @@ def add_research_areas(shortId):
     data = request.get_json(force=True)
     profile = query_faculty(shortId)
     ras = query_research_areas(uris=profile.research_areas)
-    return jsonify(
-        { 'profile': profile.to_dict(),
-        'ras': [ r.to_dict() for r in ras ] })
     for ra in ras:
         if data['name'] == ra.name[0]:
             return jsonify({ 'rabid': ra.uri })
     existing = query_research_areas(name=data['name'])
     if not existing:
-        ra = create_research_area(data['name'])
+        uri = mint_uri()
+        if not uri:
+            raise Exception('Failure to create new URI')
+        ra = models.ResearchArea(uri)
+        ra.update('name', [ data['name'] ])
     else:
         ra = existing[0]
-    profile.update('research_areas', ra)
-    ra.update('faculty', profile)
-    results = updateModels([ra, profile])
+    ras_uris = { u for u in profile.research_areas }
+    ras_uris.add(ra.uri)
+    profile.update('research_areas', list(ras_uris))
+    fac_uris = { u for u in ra.faculty }
+    fac_uris.add(profile.uri)
+    ra.update('faculty', list(fac_uris))
+    results = update_models([ra, profile])
     if '200' in results:
         return jsonify({'rabid': ra.uri })
     else:

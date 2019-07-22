@@ -5,7 +5,7 @@ BPROFILE = 'http://vivo.brown.edu/ontology/profile#'
 VIVO = 'http://vivoweb.org/ontology/core#'
 BLOCAL = 'http://vivo.brown.edu/ontology/vivo-brown/'
 RDFS = 'http://www.w3.org/2000/01/rdf-schema#'
-
+RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
 
 def rdf_string(data, dataType):
     if dataType == 'uri':
@@ -68,7 +68,7 @@ class FacultyProfile:
         'teaching_overview': 'literal',
         'appointments': 'appointments',
         'collaborators': 'collaborators',
-        'research_areas': 'research_areas',
+        'research_areas': 'uri',
         'credentials': 'credentials',
         'trainings': 'trainings',
         'delegates': 'delegates',
@@ -110,17 +110,20 @@ class ResearchArea:
 
     __property_map = {
         VIVO + 'researchAreaOf': 'faculty',
-        RDFS + 'label': 'name'
+        RDFS + 'label': 'name',
+        RDF + 'type': 'rdfType'
     }
 
     __attribute_map = {
         'faculty': VIVO + 'researchAreaOf',
-        'name': RDFS + 'label'
+        'name': RDFS + 'label',
+        'rdfType': RDF + 'type'
     }
 
     __attribute_type = {
         'faculty': 'uri',
-        'name': 'literal'
+        'name': 'literal',
+        'rdfType': 'uri'
     }
 
     def __init__(self, uri=None):
@@ -129,12 +132,17 @@ class ResearchArea:
         self.data = {}
         self.add = set()
         self.remove = set()
+        for p in self.__property_map:
+            self.__dict__[self.__property_map[p]] = []
+        self.update('rdfType', [ BLOCAL + 'ResearchArea' ] )
 
     def load(self, data):
         for d in data:
-            if d in self.__property_map:
+            try:
                 self.__dict__[self.__property_map[d]] = data[d]
                 self.data[d] = data[d]
+            except:
+                continue
 
     def format_triple(self, attr, data):
         return ( rdf_string(self.uri, 'uri'),
