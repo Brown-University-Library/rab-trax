@@ -5,7 +5,7 @@ import json
 import time
 import random
 import uuid
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 from flask import jsonify, render_template, request
 import requests
@@ -84,20 +84,20 @@ def write_update_query(obj):
     insert_template = u"INSERTDATA{{GRAPH{0}{{{1}}}}}"
     pbody = ""
     delete_triples = ""
-    for triple in obj['remove']:
+    for triple in obj.remove:
         delete_triples += write_statement(triple)
     insert_triples = ""
-    for triple in obj['add']:
+    for triple in obj.add:
         insert_triples += write_statement(triple)
     if delete_triples:
-        pbody += delete_template.format(obj['graph'], delete_triples)
+        pbody += delete_template.format(obj.graph, delete_triples)
     if delete_triples and insert_triples:
         pbody += ";"
     if insert_triples:
-        pbody += insert_template.format(obj['graph'], insert_triples)
+        pbody += insert_template.format(obj.graph, insert_triples)
     return pbody
 
-
+DataDiff = namedtuple('DataDiff', 'add remove graph')
 def update_models(models):
     add = set()
     rmv = set()
@@ -110,8 +110,8 @@ def update_models(models):
         raise Exception('Cannot update by named graph')
     if len(add | rmv) == 0:
         return '200 No update'
-    query = write_update_query( {'add': (add - rmv),
-        'remove': (rmv - add), 'graph': graphs.pop() })
+    query = write_update_query( DataDiff(add=(add - rmv),
+        remove=(rmv - add), graph=graphs.pop() ) )
     remote = SPARQLWrapper.SPARQLWrapper(updateUrl)
     remote.addParameter('email', user)
     remote.addParameter('password', passw)
