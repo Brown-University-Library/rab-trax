@@ -436,13 +436,21 @@ def add_research_areas(shortId):
 @app.route('/profile/<shortId>/faculty/edit/overview/research-areas/delete',
     methods=['POST'])
 def remove_research_areas(shortId):
-    data = query_faculty_association(
-        shortId, property_map['research_areas'])
-    label = property_map['label']
-    return jsonify(
-        { 'research_areas':
-            [ { 'rabid': k,
-                'label': data[k].get(label,[''])[0] } for k in data ] })
+    data = request.get_json(force=True)
+    uri = data['rabid']
+    profile = query_faculty(shortId)
+    if uri not in profile.research_areas:
+        return jsonify({})
+    ras = [ r for r in profile.research_areas if r != uri ]
+    profile.update('research_areas', ras)
+    ra = query_research_areas(uris=[ uri ])[0]
+    faculty = [ f for f in ra.faculty if f != profile.uri ]
+    ra.update('faculty',faculty)
+    results = update_models([ra, profile])
+    if '200' in results:
+        return jsonify({'deleted': data['rabid'] })
+    else:
+        return jsonify({'error': 'I\'m working on it!'})
 
 
 @app.route('/profile/<shortId>/faculty/edit/overview/ontheweb/update')
