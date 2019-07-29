@@ -160,3 +160,68 @@ class ResearchArea:
 
     def to_dict(self):
         return { a: self.__dict__.get(a, []) for a in self.__attribute_map }
+
+
+class WebLink:
+
+    __property_map = {
+        BLOCAL + 'drrbWebPageOf': 'faculty',
+        VIVO + 'linkAnchorText': 'link_text',
+        VIVO + 'linkURI': 'link_address',
+        VIVO + 'rank': 'rank',
+        RDFS + 'label': 'name',
+        RDF + 'type': 'rdfType'
+    }
+
+    __attribute_map = {
+        'faculty': BLOCAL + 'drrbWebPageOf',
+        'link_text': VIVO + 'linkAnchorText',
+        'link_address': VIVO + 'linkURI',
+        'rank': VIVO + 'rank',
+        'name': RDFS + 'label',
+        'rdfType': RDF + 'type'
+    }
+
+    __attribute_type = {
+        'faculty': 'uri',
+        'link_text': 'literal',
+        'link_address': 'literal',
+        'rank': 'literal',
+        'name': 'literal',
+        'rdfType': 'uri'
+    }
+
+    def __init__(self, uri=None):
+        self.uri = uri
+        self.graph = '<http://vitro.mannlib.cornell.edu/default/vitro-kb-2>'
+        self.data = {}
+        self.add = set()
+        self.remove = set()
+        for p in self.__property_map:
+            self.__dict__[self.__property_map[p]] = []
+        self.update('rdfType', [ VIVO + 'URLLink' ] )
+
+    def load(self, data):
+        for d in data:
+            try:
+                self.__dict__[self.__property_map[d]] = data[d]
+                self.data[d] = data[d]
+            except:
+                continue
+
+    def format_triple(self, attr, data):
+        return ( rdf_string(self.uri, 'uri'),
+            rdf_string(self.__attribute_map[attr], 'uri'),
+            rdf_string(data, self.__attribute_type[attr]) )
+
+    def update(self, attr, data):
+        if data == getattr(self, attr):
+            return
+        add = { self.format_triple(attr, d) for d in data }
+        rmv = { self.format_triple(attr, d) for d in getattr(self, attr) }
+        self.add |= (add - rmv)
+        self.remove |= (rmv - add)
+        setattr(self, attr, data)
+
+    def to_dict(self):
+        return { a: self.__dict__.get(a, []) for a in self.__attribute_map }

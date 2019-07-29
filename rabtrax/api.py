@@ -344,6 +344,59 @@ def query_research_areas(uris=None, faculty=None, name=None):
     return out
 
 
+def query_web_links(uris=None, faculty=None, link_text=None,
+    link_address=None, rank=None):
+    filters = []
+    if faculty:
+        filters.append(
+            make_filter('?link',
+                '<http://vivo.brown.edu/ontology/vivo-brown/drrbWebPageOf>',
+                '?fac',
+                '<{}>'.format(faculty) ) )
+    if link_text:
+        filters.append(
+            make_filter('?link',
+                '<http://vivoweb.org/ontology/core#linkAnchorText>',
+                '?link_text',
+                '{}'.format(json.dumps(link_text)) ) )
+    if link_address:
+        filters.append(
+            make_filter('?link',
+                '<http://vivoweb.org/ontology/core#linkURI>',
+                '?link_address',
+                '{}'.format(json.dumps(link_address)) ) )
+    if rank:
+        filters.append(
+            make_filter('?link',
+                '<http://vivoweb.org/ontology/core#rank>',
+                '?rank',
+                '{}'.format(json.dumps(rank)) ) )
+    if uris:
+        filters.append(
+            make_filter(None,None,'?link',''.join( ['<{}>'.format(u) for u in uris ]) ) )
+    query = """
+        PREFIX core: <http://vivoweb.org/ontology/core#>
+        DESCRIBE ?link
+        WHERE {{ ?link a core:URLLink . {0} {1} }}
+        """.format(''.join([ f['filter'] for f in filters if f.get('filter') ]),
+         ''.join([ f['values'] for f in filters if f.get('values') ]) )
+    remote = SPARQLWrapper.SPARQLWrapper(queryUrl, updateUrl)
+    remote.addParameter('email', user)
+    remote.addParameter('password', passw)
+    remote.setMethod(SPARQLWrapper.POST)
+    remote.setQuery( query )
+    results = remote.queryAndConvert()
+    resources = defaultdict(lambda: defaultdict(list))
+    for r in results.triples((None,None,None)):
+        resources[r[0].toPython()][r[1].toPython()].append(r[2].toPython())
+    out = []
+    for r in resources:
+        res = models.WebLink(uri=r)
+        res.load(resources[r])
+        out.append(res)
+    return out
+
+
 def query_faculty(shortId):
     uri = shortIdToUri(shortId)
     remote = SPARQLWrapper.SPARQLWrapper(queryUrl, updateUrl)
@@ -399,7 +452,7 @@ def get_research_areas(shortId):
     uri = shortIdToUri(shortId)
     data = query_research_areas(faculty=uri)
     return jsonify( { 'research_areas': [
-        { 'rabid': ra.uri, 'label': ra.name[0] } for ra in data ] } )
+        { 'rabid': ra.uri, 'name': ra.name[0] } for ra in data ] } )
 
 
 @app.route('/profile/<shortId>/faculty/edit/overview/research-areas/add',
@@ -453,19 +506,16 @@ def remove_research_areas(shortId):
         return jsonify({'error': 'I\'m working on it!'})
 
 
-@app.route('/profile/<shortId>/faculty/edit/overview/ontheweb/update')
-def profile_web_links(shortId):
-    data = query_faculty_association(
-        shortId, property_map['web_links'])
-    text = property_map['link_text']
-    url = property_map['link_url']
-    rank = property_map['rank']
+@app.route('/profile/<shortId>/faculty/edit/overview/ontheweb')
+def get_web_links(shortId):
+    uri = shortIdToUri(shortId)
+    data = query_web_links(faculty=uri)
     return jsonify(
         { 'web_links': [ {
-            'rabid': k,
-            'text': data[k].get(text,[''])[0],
-            'url': data[k].get(url,[''])[0],
-            'rank': data[k].get(rank,[''])[0] } for k in data ] })
+            'rabid': link.uri,
+            'text': link.link_text[0],
+            'url': link.link_address[0],
+            'rank': link.rank[0] } for link in data ] })
 
 
 @app.route('/profile/<shortId>/faculty/edit/background/training/update')
@@ -495,7 +545,7 @@ def profile_training(shortId):
     methods=['GET'])
 def get_awards_honors(shortId):
     profile = query_faculty(shortId)
-    return jsonify({'awards_honors': profile.awards[0] })
+    return jsonify({'awards_honors': profile.awards_honors[0] })
 
 
 @app.route('/profile/<shortId>/faculty/edit/background/honors/update',
