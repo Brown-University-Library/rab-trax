@@ -518,6 +518,56 @@ def get_web_links(shortId):
             'rank': link.rank[0] } for link in data ] })
 
 
+@app.route('/profile/<shortId>/faculty/edit/overview/ontheweb/add',
+    methods=['POST'])
+def add_weblink(shortId):
+    data = request.get_json(force=True)
+    profile = query_faculty(shortId)
+    links = query_web_links(uris=profile.web_links)
+    for link in links:
+        if data['url'] == link.link_address[0] and data['text'] == link.link_text[0]:
+            return jsonify({ 'rabid': link.uri })
+    uri = mint_uri()
+    if not uri:
+        raise Exception('Failure to create new URI')
+    link = models.WebLink(uri)
+    link.update('link_text', [ data['text'] ])
+    link.update('link_address', [ data['url'] ])
+    link.update('rank', [ data['rank'] ])
+    link.update('faculty', [ profile.uri ] )
+    link_uris = { u for u in profile.web_links }
+    link_uris.add(link.uri)
+    profile.update('web_links', list(link_uris))
+    results = update_models([link, profile])
+    if '200' in results:
+        return jsonify({'rabid': link.uri })
+    else:
+        return jsonify({'error': 'I\'m working on it!'})
+
+
+@app.route('/profile/<shortId>/faculty/edit/overview/ontheweb/delete',
+    methods=['POST'])
+def remove_weblink(shortId):
+    data = request.get_json(force=True)
+    uri = data['rabid']
+    profile = query_faculty(shortId)
+    if uri not in profile.web_links:
+        return jsonify({})
+    links = [ l for l in profile.web_links if l != uri ]
+    profile.update('web_links', links)
+    link = query_web_links(uris=[ uri ])[0]
+    link.update('link_text', [])
+    link.update('link_address', [])
+    link.update('rank', [])
+    link.update('faculty', [])
+    link.update('rdfType', [])
+    results = update_models([link, profile])
+    if '200' in results:
+        return jsonify({'deleted': data['rabid'] })
+    else:
+        return jsonify({'error': 'I\'m working on it!'})
+
+
 @app.route('/profile/<shortId>/faculty/edit/background/training/update')
 def profile_training(shortId):
     training = property_map['trainings']

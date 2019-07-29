@@ -219,7 +219,9 @@ class WebLink:
             return
         add = { self.format_triple(attr, d) for d in data }
         rmv = { self.format_triple(attr, d) for d in getattr(self, attr) }
+        self.add = self.add - rmv
         self.add |= (add - rmv)
+        self.remove = self.remove - add
         self.remove |= (rmv - add)
         setattr(self, attr, data)
 
