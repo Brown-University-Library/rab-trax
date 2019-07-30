@@ -10,12 +10,16 @@ RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
 def rdf_string(data, dataType):
     if dataType == 'uri':
         return '<{}>'.format(data)
+    elif dataType == 'dateTime':
+        return '"{}"^^<http://www.w3.org/2001/XMLSchema#dateTime>'.format(
+            data.strftime('%Y-%m-%dT%H:%M:%S.%f'))
     else:
         return json.dumps(data)
 
 class FacultyProfile:
 
     __property_map = {
+        BLOCAL + 'profileUpdated': 'last_updated',
         BPROFILE + 'consentsVisualizations': 'show_visualizations',
         VIVO + 'overview': 'overview',
         BLOCAL + 'affiliations': 'affiliations',
@@ -36,6 +40,7 @@ class FacultyProfile:
     }
 
     __attribute_map = {
+        'last_updated': BLOCAL + 'profileUpdated',
         'show_visualizations': BPROFILE + 'consentsVisualizations',
         'overview': VIVO + 'overview',
         'affiliations': BLOCAL + 'affiliations',
@@ -56,6 +61,7 @@ class FacultyProfile:
     }
 
     __attribute_type = {
+        'last_updated': 'dateTime',
         'show_visualizations': 'boolean',
         'overview': 'literal',
         'affiliations': 'literal',

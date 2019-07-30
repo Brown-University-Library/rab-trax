@@ -6,6 +6,7 @@ import time
 import random
 import uuid
 from collections import defaultdict, namedtuple
+from datetime import datetime as dt
 
 from flask import jsonify, render_template, request
 import requests
@@ -564,6 +565,26 @@ def remove_weblink(shortId):
     results = update_models([link, profile])
     if '200' in results:
         return jsonify({'deleted': data['rabid'] })
+    else:
+        return jsonify({'error': 'I\'m working on it!'})
+
+
+@app.route('/profile/<shortId>/faculty/edit/overview/ontheweb/update',
+    methods=['POST'])
+def update_weblink(shortId):
+    data = request.get_json(force=True)
+    profile = query_faculty(shortId)
+    if data['rabid'] not in profile.web_links:
+        return jsonify({})
+    link = query_web_links(uris=[ data['rabid'] ])[0]
+    link.update('link_text', [ data['text'] ])
+    link.update('link_address', [ data['url'] ])
+    link.update('rank', [ data['rank'] ])
+    profile.update('last_updated', [ dt.now() ])
+    results = update_models([link,profile])
+    if '200' in results:
+        return jsonify( { 'rabid': link.uri, 'text': link.link_text[0],
+            'url': link.link_address[0], 'rank': link.rank[0] } )
     else:
         return jsonify({'error': 'I\'m working on it!'})
 
