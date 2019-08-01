@@ -36,7 +36,8 @@ class FacultyProfile:
         BPROFILE + 'hasCredential': 'credentials',
         BPROFILE + 'hasTraining': 'trainings',
         BLOCAL + 'hasDelegate': 'delegates',
-        BLOCAL + 'hasGeographicResearchArea': 'geo_research_areas'
+        BLOCAL + 'hasGeographicResearchArea': 'geo_research_areas',
+        RDF + 'type': 'rdfType'
     }
 
     __attribute_map = {
@@ -57,7 +58,8 @@ class FacultyProfile:
         'credentials': BPROFILE + 'hasCredential',
         'trainings': BPROFILE + 'hasTraining',
         'delegates': BLOCAL + 'hasDelegate',
-        'geo_research_areas': BLOCAL + 'hasGeographicResearchArea'
+        'geo_research_areas': BLOCAL + 'hasGeographicResearchArea',
+        'rdfType': RDF + 'type'
     }
 
     __attribute_type = {
@@ -69,7 +71,7 @@ class FacultyProfile:
         'scholarly_work': 'literal',
         'research_overview': 'literal',
         'funded_research': 'literal',
-        'web_links': 'web_links',
+        'web_links': 'uri',
         'research_statement': 'literal',
         'teaching_overview': 'literal',
         'appointments': 'appointments',
@@ -78,7 +80,8 @@ class FacultyProfile:
         'credentials': 'credentials',
         'trainings': 'trainings',
         'delegates': 'delegates',
-        'geo_research_areas': 'geo_research_areas'
+        'geo_research_areas': 'geo_research_areas',
+        'rdfType': 'uri'
     }
 
     def __init__(self, uri):
@@ -87,6 +90,9 @@ class FacultyProfile:
         self.data = {}
         self.add = set()
         self.remove = set()
+        for p in self.__property_map:
+            self.__dict__[self.__property_map[p]] = []
+        self.update('rdfType', [ VIVO + 'FacultyMember' ] )
 
     def load(self, data):
         for d in data:

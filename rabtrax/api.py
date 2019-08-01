@@ -461,7 +461,7 @@ def get_research_areas(shortId):
 def add_research_areas(shortId):
     data = request.get_json(force=True)
     profile = query_faculty(shortId)
-    ras = query_research_areas(uris=profile.research_areas)
+    ras = query_research_areas(uris=profile.research_areas, faculty=profile.uri)
     for ra in ras:
         if data['name'] == ra.name[0]:
             return jsonify({ 'rabid': ra.uri })
@@ -524,7 +524,7 @@ def get_web_links(shortId):
 def add_weblink(shortId):
     data = request.get_json(force=True)
     profile = query_faculty(shortId)
-    links = query_web_links(uris=profile.web_links)
+    links = query_web_links(uris=profile.web_links, faculty=profile.uri)
     for link in links:
         if data['url'] == link.link_address[0] and data['text'] == link.link_text[0]:
             return jsonify({ 'rabid': link.uri })
