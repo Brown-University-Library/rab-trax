@@ -431,7 +431,10 @@ def update_profile(profile):
     methods=['GET'])
 def get_overview(shortId):
     profile = query_faculty(shortId)
-    return jsonify({'overview': profile.overview[0] })
+    if profile.overview != []:
+        return jsonify({'overview': profile.overview[0] })
+    else:
+        return jsonify({'overview': '' })
 
 
 @app.route('/profile/<shortId>/faculty/edit/overview/overview/update',
@@ -616,7 +619,10 @@ def profile_training(shortId):
     methods=['GET'])
 def get_awards_honors(shortId):
     profile = query_faculty(shortId)
-    return jsonify({'awards_honors': profile.awards_honors[0] })
+    if profile.awards_honors != []:
+        return jsonify({'awards_honors': profile.awards_honors[0] })
+    else:
+        return jsonify({'awards_honors': '' })
 
 
 @app.route('/profile/<shortId>/faculty/edit/background/honors/update',
@@ -636,7 +642,10 @@ def update_awards_honors(shortId):
     methods=['GET'])
 def get_teaching_overview(shortId):
     profile = query_faculty(shortId)
-    return jsonify({'teaching_overview': profile.teaching_overview[0] })
+    if profile.teaching_overview != []:
+        return jsonify({'teaching_overview': profile.teaching_overview[0] })
+    else:
+        return jsonify({'teaching_overview': '' })
 
 
 @app.route('/profile/<shortId>/faculty/edit/teaching/overview/update',
@@ -656,7 +665,10 @@ def update_teaching_overview(shortId):
     methods=['GET'])
 def get_research_overview(shortId):
     profile = query_faculty(shortId)
-    return jsonify({'research_overview': profile.research_overview[0] })
+    if profile.research_overview != []:
+        return jsonify({'research_overview': profile.research_overview[0] })
+    else:
+        return jsonify({'research_overview': '' })
 
 
 @app.route('/profile/<shortId>/faculty/edit/research/overview/update',
@@ -676,7 +688,10 @@ def update_research_overview(shortId):
     methods=['GET'])
 def get_research_statement(shortId):
     profile = query_faculty(shortId)
-    return jsonify({'research_statement': profile.research_statement[0] })
+    if profile.research_statement != []:
+        return jsonify({'research_statement': profile.research_statement[0] })
+    else:
+        return jsonify({'research_statement': '' })
 
 
 @app.route('/profile/<shortId>/faculty/edit/research/statement/update',
@@ -696,7 +711,10 @@ def update_research_statement(shortId):
     methods=['GET'])
 def get_funded_research(shortId):
     profile = query_faculty(shortId)
-    return jsonify({'funded_research': profile.funded_research[0] })
+    if profile.funded_research != []:
+        return jsonify({'funded_research': profile.funded_research[0] })
+    else:
+        return jsonify({'funded_research': '' })
 
 
 @app.route('/profile/<shortId>/faculty/edit/research/funded/update',
@@ -716,7 +734,10 @@ def update_funded_research(shortId):
     methods=['GET'])
 def get_scholarly_work(shortId):
     profile = query_faculty(shortId)
-    return jsonify({'scholarly_work': profile.scholarly_work[0] })
+    if profile.scholarly_work != []:
+        return jsonify({'scholarly_work': profile.scholarly_work[0] })
+    else:
+        return jsonify({'scholarly_work': '' })
 
 
 @app.route('/profile/<shortId>/faculty/edit/research/scholarly/update',
@@ -736,7 +757,10 @@ def update_scholarly_work(shortId):
     methods=['GET'])
 def get_affiliations(shortId):
     profile = query_faculty(shortId)
-    return jsonify({'affiliations': profile.affiliations[0] })
+    if profile.affiliations != []:
+        return jsonify({'affiliations': profile.affiliations[0] })
+    else:
+        return jsonify({'affiliations': '' })
 
 
 @app.route('/profile/<shortId>/faculty/edit/affiliations/affiliations/update',
