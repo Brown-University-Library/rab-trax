@@ -5,7 +5,7 @@ class Ontology(object):
         self.name = prefix
         self.ns = namespace
         self.properties = {}
-        self.classes = {}
+        self.classes = set()
 
 
 RDF = Ontology('http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'rdf')
@@ -25,6 +25,9 @@ VIVO.properties = {
     'teaching_overview': VIVO.ns + 'teachingOverview',
     'has_collaborator': VIVO.ns + 'hasCollaborator',
     'has_research_area': VIVO.ns + 'hasResearchArea',
+}
+VIVO.classes = {
+    VIVO.ns + 'Faculty'
 }
 
 BPROFILE = Ontology('http://vivo.brown.edu/ontology/profile#', 'bprofile')
