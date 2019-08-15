@@ -1,57 +1,38 @@
 import rdflib
 
 
-class String(rdflib.Literal):
+class Attribute(object):
 
-    def __new__(cls, val):
-        return rdflib.Literal.__new__(cls, val, datatype=rdflib.XSD.string)
+    def __init__(self, predUri):
+        self.uri = predUri
 
-    def to_rdf(self):
-        return self.n3()
-
-    def __repr__(self):
-        return "'{}'".format(self.value)
+    def __call__(self, graph):
+        return [ o.toPython() for o in graph.objects(
+            predicate=self.uri) ]
 
 
-class Boolean(rdflib.Literal):
+class Link(object):
 
-    def __new__(cls, val):
-        return rdflib.Literal.__new__(cls, val, datatype=rdflib.XSD.boolean)
-
-    def to_rdf(self):
-        return self.n3()
-
-    def __repr__(self):
-        return "{}".format(self.value)
-
-
-class DateTime(rdflib.Literal):
-
-    def __new__(cls, val):
-        return rdflib.Literal.__new__(cls, val, datatype=rdflib.XSD.dateTime)
-
-    def to_rdf(self):
-        return self.n3()
-
-    def __repr__(self):
-        return "'{}'".format(self.value)
-
-
-class Integer(rdflib.Literal):
-
-    def __new__(cls, val):
-        return rdflib.Literal.__new__(cls, val, datatype=rdflib.XSD.integer)
-
-    def to_rdf(self):
-        return self.n3()
-
-    def __repr__(self):
-        return "{}".format(self.value)
+    def __init__(self, predUri, resType):
+        pass
 
 
 class Resource(type):
+
     def __init__(cls, classname, bases, dct_):
+        cls.__mapper__ = {}
         super().__init__(classname, bases, dct_)
+
+    def __getattr__(self, key):
+        if key in self.__mapper__:
+            return self.__mapper__[key](self.graph)
+
+    def __setattr__(cls, key, value):
+        if isinstance(value, Attribute):
+            cls.__mapper__[key] = value
+        else:
+            type.__setattr__(cls, key, value)
+
 
 
 def domain(ontologies):
@@ -59,12 +40,17 @@ def domain(ontologies):
     return Resource('Resource', (object,) , { 'ontologies': ns_map })
 
 
+class Description(object):
 
-class Property:
+    def __init__(self, vocabularies):
+        pass
 
-    def __init__(self, store=None):
-        self.store = store
-        self.resources = {}
 
-    def setStore(self, store):
-        self.store = store
+# class Property:
+
+#     def __init__(self, store=None):
+#         self.store = store
+#         self.resources = {}
+
+#     def setStore(self, store):
+#         self.store = store

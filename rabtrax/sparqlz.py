@@ -1,6 +1,7 @@
 from rabtrax import app
 
 import requests
+import SPARQLWrapper
 import lxml.etree as ET
 
 from collections import defaultdict
@@ -75,3 +76,17 @@ def get(uri, get_links=None):
     else:
         links = {}
     return { 'resource': res, 'links': links }
+
+def shortIdToUri(shortId):
+    return 'http://vivo.brown.edu/individual/{0}'.format(shortId)
+
+def describe_faculty(shortId):
+    uri = shortIdToUri(shortId)
+    remote = SPARQLWrapper.SPARQLWrapper(queryUrl, updateUrl)
+    remote.addParameter('email', user)
+    remote.addParameter('password', passw)
+    remote.setMethod(SPARQLWrapper.POST)
+    remote.setQuery(
+        "DESCRIBE <{0}>".format(uri) )
+    results = remote.queryAndConvert()
+    return results

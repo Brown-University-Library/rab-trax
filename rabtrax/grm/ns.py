@@ -1,10 +1,95 @@
+import rdflib
+
+
+class XSDDataTypeError(Exception):
+    pass
+
+
+# class XSDDataType(object):
+
+#     def __init__(self, dt):
+#         self.datatype = dt
+
+#     def validate(self, val):
+
+#         try:
+#             cls.validate(val)
+#         return rdflib.Literal.__new__(cls, val, datatype=rdflib.XSD.string)  
+
+
+class String(rdflib.Literal):
+
+    def __new__(cls, val):
+        return rdflib.Literal.__new__(cls, val, datatype=rdflib.XSD.string)
+
+    def to_rdf(self):
+        return self.n3()
+
+    def __repr__(self):
+        return "'{}'".format(self.value)
+
+
+class Boolean(rdflib.Literal):
+
+    def __new__(cls, val):
+        return rdflib.Literal.__new__(cls, val, datatype=rdflib.XSD.boolean)
+
+    def to_rdf(self):
+        return self.n3()
+
+    def __repr__(self):
+        return "{}".format(self.value)
+
+
+class DateTime(rdflib.Literal):
+
+    def __new__(cls, val):
+        return rdflib.Literal.__new__(cls, val, datatype=rdflib.XSD.dateTime)
+
+    def to_rdf(self):
+        return self.n3()
+
+    def __repr__(self):
+        return "'{}'".format(self.value)
+
+
+class Integer(rdflib.Literal):
+
+    def __new__(cls, val):
+        return rdflib.Literal.__new__(cls, val, datatype=rdflib.XSD.integer)
+
+    def to_rdf(self):
+        return self.n3()
+
+    def __repr__(self):
+        return "{}".format(self.value)
+
+
+class Property(object):
+
+    def __init__(self, uri, range_):
+        # self.uri = 
+        self.range_ = range_
+
+    def validate(self, val):
+        try:
+            return self.range_(val)
+        except DataTypeError as e:
+            print(e)
+
+    def triple(self, sbj, val):
+        return (sbj, self.uri, rval)
+
+
+
+
 class Ontology(object):
 
     def __init__(self, namespace, prefix):
         self.prefix = prefix
         self.name = prefix
-        self.ns = namespace
-        self.properties = {}
+        self.ns = rdflib.Namespace(namespace)
+        self.properties = set()
         self.classes = set()
 
 
