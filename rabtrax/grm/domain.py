@@ -1,6 +1,14 @@
 import rdflib
 
 
+def set_resource_attributes(cls):
+    print(cls)
+    # for name, val in vars(cls).items():
+        # if isinstance(val, Attribute):
+        #     cls.__mapper__[name] = val
+            # del cls.__dict__[val]
+
+
 class Attribute(object):
 
     def __init__(self, predUri):
@@ -21,13 +29,16 @@ class Resource(type):
 
     def __init__(cls, classname, bases, dct_):
         cls.__mapper__ = {}
-        super().__init__(classname, bases, dct_)
+        set_resource_attributes(cls)
+        type.__init__(cls, classname, bases, dct_)
 
-    def __getattr__(self, key):
-        if key in self.__mapper__:
-            return self.__mapper__[key](self.graph)
+    def __getattribute__(self, key):
+        print("GET ATTRIBUTE: ", key)
+        # if key in self.__mapper__:
+        #     return self.__mapper__[key](self.graph)
 
     def __setattr__(cls, key, value):
+        print("SETTING ATTRIBUTE: ", key, value)
         if isinstance(value, Attribute):
             cls.__mapper__[key] = value
         else:

@@ -1,9 +1,10 @@
-from grm.domain import domain, Attribute
-from grm import ns
+from rabtrax.grm.domain import domain, Attribute
+from rabtrax.grm import ns
 
 Resource = domain([ns.BLOCAL, ns.BPROFILE, ns.VIVO, ns.RDF, ns.RDFS])
 
 import rdflib
+import inspect
 
 
 BPROFILE = rdflib.Namespace("http://vivo.brown.edu/ontology/profile#")
@@ -11,10 +12,13 @@ BPROFILE = rdflib.Namespace("http://vivo.brown.edu/ontology/profile#")
 
 class FacultyProfile(Resource):
 
+    print("Hanging out!")
     # __rdfType__ = ns.VIVO.classes
 
     # last_updated = Property()
     show_visualizations = Attribute(BPROFILE.consentsVisualizations)
+    # print(__name__)
+    # print(inspect.getmembers())
     # overview = dm.Property(dm.string)
     # affiliations = dm.Property(dm.string)
     # awards_honors = dm.Property(dm.string)
@@ -38,6 +42,6 @@ class FacultyProfile(Resource):
         self.uri = list(graph.subjects())[0]
         self.graph = graph
 
-    def show_visualizations(self):
-        return [ o.toPython() for o in self.graph.objects(
-            predicate=BPROFILE.consentsVisualizations) ]
+    # def show_visualizations(self):
+    #     return [ o.toPython() for o in self.graph.objects(
+    #         predicate=BPROFILE.consentsVisualizations) ]
