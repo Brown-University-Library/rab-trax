@@ -239,3 +239,64 @@ class WebLink:
 
     def to_dict(self):
         return { a: self.__dict__.get(a, []) for a in self.__attribute_map }
+
+
+class Collaborator:
+
+    __property_map = {
+        BLOCAL + 'fullName': 'full_name',
+        BLOCAL + 'alphaName': 'alpha_name',
+        RDFS + 'label': 'label',
+        RDF + 'type': 'rdfType'
+    }
+
+    __attribute_map = {
+        'full_name': BLOCAL + 'fullName',
+        'alpha_name': BLOCAL + 'alphaName',
+        'label': RDFS + 'label',
+        'rdfType': RDF + 'type'
+    }
+
+    __attribute_type = {
+        'full_name': 'literal',
+        'alpha_name': 'literal',
+        'label': 'literal',
+        'rdfType': 'uri'
+    }
+
+    def __init__(self, uri=None):
+        self.uri = uri
+        self.graph = '<http://vitro.mannlib.cornell.edu/default/vitro-kb-2>'
+        self.data = {}
+        self.add = set()
+        self.remove = set()
+        for p in self.__property_map:
+            self.__dict__[self.__property_map[p]] = []
+        self.update('rdfType', [ VIVO + 'FacultyMember' ] )
+
+    def load(self, data):
+        for d in data:
+            try:
+                self.__dict__[self.__property_map[d]] = data[d]
+                self.data[d] = data[d]
+            except:
+                continue
+
+    def format_triple(self, attr, data):
+        return ( rdf_string(self.uri, 'uri'),
+            rdf_string(self.__attribute_map[attr], 'uri'),
+            rdf_string(data, self.__attribute_type[attr]) )
+
+    def update(self, attr, data):
+        if data == getattr(self, attr):
+            return
+        add = { self.format_triple(attr, d) for d in data }
+        rmv = { self.format_triple(attr, d) for d in getattr(self, attr) }
+        self.add = self.add - rmv
+        self.add |= (add - rmv)
+        self.remove = self.remove - add
+        self.remove |= (rmv - add)
+        setattr(self, attr, data)
+
+    def to_dict(self):
+        return { a: self.__dict__.get(a, []) for a in self.__attribute_map }

@@ -305,6 +305,59 @@ def make_filter(var, prop, ovar, val):
     return out
 
 
+def query_collaborators(uris=None, faculty=None, label=None,
+        fullName=None, alphaName=None):
+    filters = []
+    if faculty:
+        filters.append({'filter':
+            write_statement(
+                ("<{}>".format(faculty),
+                    '<http://vivoweb.org/ontology/core#hasCollaborator>',
+                '?uri') ) })
+    if label:
+        filters.append(
+            make_filter('?uri',
+                '<http://www.w3.org/2000/01/rdf-schema#label>',
+                '?label',
+                '{}'.format(json.dumps(label)) ) )
+    if fullName:
+        filters.append(
+            make_filter('?uri',
+                '<http://vivo.brown.edu/ontology/vivo-brown/fullName>',
+                '?fullName',
+                '{}'.format(json.dumps(fullName)) ) )
+    if alphaName:
+        filters.append(
+            make_filter('?uri',
+                '<http://vivo.brown.edu/ontology/vivo-brown/alphaName>',
+                '?alphaName',
+                '{}'.format(json.dumps(alphaName)) ) )
+    if uris:
+        filters.append(
+            make_filter(None,None,'?uri',''.join( ['<{}>'.format(u) for u in uris ]) ) )
+    query = """
+        PREFIX vivo: <http://vivoweb.org/ontology/core#>
+        DESCRIBE ?uri
+        WHERE {{ ?uri a vivo:FacultyMember . {0} {1} }}
+        """.format(''.join([ f['filter'] for f in filters if f.get('filter') ]),
+         ''.join([ f['values'] for f in filters if f.get('values') ]) )
+    remote = SPARQLWrapper.SPARQLWrapper(queryUrl, updateUrl)
+    remote.addParameter('email', user)
+    remote.addParameter('password', passw)
+    remote.setMethod(SPARQLWrapper.POST)
+    remote.setQuery( query )
+    results = remote.queryAndConvert()
+    resources = defaultdict(lambda: defaultdict(list))
+    for r in results.triples((None,None,None)):
+        resources[r[0].toPython()][r[1].toPython()].append(r[2].toPython())
+    out = []
+    for r in resources:
+        res = models.Collaborator(uri=r)
+        res.load(resources[r])
+        out.append(res)
+    return out
+
+
 def query_research_areas(uris=None, faculty=None, name=None):
     filters = []
     if faculty:
@@ -776,15 +829,56 @@ def update_affiliations(shortId):
         return jsonify({'error': 'I\'m working on it!'})
 
 
-@app.route('/profile/<shortId>/faculty/edit/affiliations/collaborators/update')
-def profile_collaborators(shortId):
-    data = query_faculty_association(
-        shortId, property_map['collaborators'])
-    label = property_map['label']
-    return jsonify(
-        { 'collaborators':
-            [ { 'rabid': k,
-                'label': data[k].get(label,[''])[0] } for k in data ] })
+@app.route('/profile/<shortId>/faculty/edit/affiliations/collaborators',
+    methods=['GET'])
+def get_collaborators(shortId):
+    uri = shortIdToUri(shortId)
+    data = query_collaborators(faculty=uri)
+    return jsonify( { 'collaborators': [
+        { 'rabid': ra.uri, 'label': ra.label[0] } for ra in data ] } )
+
+
+@app.route('/profile/<shortId>/faculty/edit/affiliations/collaborators/update',
+    methods=['POST'])
+def update_collaborators(shortId):
+    data = request.get_json(force=True)
+    profile = query_faculty(shortId)
+    collabs = query_collaborators(uris=profile.research_areas, faculty=profile.uri)
+    for clb in collabs:
+        if data['name'] == clb.name[0]:
+            return jsonify({ 'rabid': clb.uri })
+    filters = {
+        'label': data.get('label'),
+        'firstName': data.get('first_name')
+    }
+    existing = query_collaborators(label=data['name'])
+    if not existing:
+        uri = mint_uri()
+        if not uri:
+            raise Exception('Failure to create new URI')
+        ra = models.ResearchArea(uri)
+        ra.update('name', [ data['name'] ])
+    else:
+        to_add = existing[0]
+    ras_uris = { u for u in profile.research_areas }
+    ras_uris.add(ra.uri)
+    profile.update('research_areas', list(ras_uris))
+    fac_uris = { u for u in ra.faculty }
+    fac_uris.add(profile.uri)
+    ra.update('faculty', list(fac_uris))
+    results = update_models([ra, profile])
+    if '200' in results:
+        return jsonify({'rabid': ra.uri })
+    else:
+        return jsonify({'error': 'I\'m working on it!'})
+
+    # data = query_faculty_association(
+    #     shortId, property_map['collaborators'])
+    # label = property_map['label']
+    # return jsonify(
+    #     { 'collaborators':
+    #         [ { 'rabid': k,
+    #             'label': data[k].get(label,[''])[0] } for k in data ] })
 
 
 @app.route('/profile/<shortId>/faculty/edit/affiliations/credential/update')
