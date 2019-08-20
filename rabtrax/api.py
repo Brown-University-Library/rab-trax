@@ -838,47 +838,46 @@ def get_collaborators(shortId):
         { 'rabid': ra.uri, 'label': ra.label[0] } for ra in data ] } )
 
 
-@app.route('/profile/<shortId>/faculty/edit/affiliations/collaborators/update',
+@app.route('/profile/<shortId>/faculty/edit/affiliations/collaborators/add',
     methods=['POST'])
-def update_collaborators(shortId):
+def add_collaborator(shortId):
     data = request.get_json(force=True)
+    uri = data['rabid']
     profile = query_faculty(shortId)
-    collabs = query_collaborators(uris=profile.research_areas, faculty=profile.uri)
+    collabs = query_collaborators(faculty=profile.uri)
     for clb in collabs:
-        if data['name'] == clb.name[0]:
+        if uri == clb.uri:
             return jsonify({ 'rabid': clb.uri })
-    filters = {
-        'label': data.get('label'),
-        'firstName': data.get('first_name')
-    }
-    existing = query_collaborators(label=data['name'])
+    existing = query_collaborators(uris=[ uri ])
     if not existing:
-        uri = mint_uri()
-        if not uri:
-            raise Exception('Failure to create new URI')
-        ra = models.ResearchArea(uri)
-        ra.update('name', [ data['name'] ])
+        return jsonify({'error': 'URI not found: {}'.format(uri)})
     else:
         to_add = existing[0]
-    ras_uris = { u for u in profile.research_areas }
-    ras_uris.add(ra.uri)
-    profile.update('research_areas', list(ras_uris))
-    fac_uris = { u for u in ra.faculty }
-    fac_uris.add(profile.uri)
-    ra.update('faculty', list(fac_uris))
-    results = update_models([ra, profile])
+    clb_uris = { u for u in profile.collaborators }
+    clb_uris.add(to_add.uri)
+    profile.update('collaborators', list(clb_uris))
+    results = update_models([profile])
     if '200' in results:
-        return jsonify({'rabid': ra.uri })
+        return jsonify({'rabid': to_add.uri })
     else:
         return jsonify({'error': 'I\'m working on it!'})
 
-    # data = query_faculty_association(
-    #     shortId, property_map['collaborators'])
-    # label = property_map['label']
-    # return jsonify(
-    #     { 'collaborators':
-    #         [ { 'rabid': k,
-    #             'label': data[k].get(label,[''])[0] } for k in data ] })
+
+@app.route('/profile/<shortId>/faculty/edit/affiliations/collaborators/delete',
+    methods=['POST'])
+def remove_collaborator(shortId):
+    data = request.get_json(force=True)
+    uri = data['rabid']
+    profile = query_faculty(shortId)
+    if uri not in profile.collaborators:
+        return jsonify({})
+    collbs = [ c for c in profile.collaborators if c != uri ]
+    profile.update('collaborators', collbs)
+    results = update_models([ profile ])
+    if '200' in results:
+        return jsonify({'deleted': uri })
+    else:
+        return jsonify({'error': 'I\'m working on it!'})
 
 
 @app.route('/profile/<shortId>/faculty/edit/affiliations/credential/update')

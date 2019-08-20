@@ -75,7 +75,7 @@ class FacultyProfile:
         'research_statement': 'literal',
         'teaching_overview': 'literal',
         'appointments': 'appointments',
-        'collaborators': 'collaborators',
+        'collaborators': 'uri',
         'research_areas': 'uri',
         'credentials': 'credentials',
         'trainings': 'trainings',
