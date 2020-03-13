@@ -451,6 +451,63 @@ def query_web_links(uris=None, faculty=None, link_text=None,
     return out
 
 
+def query_trainings(uris=None, faculty=None, link_text=None,
+    link_address=None, rank=None):
+    'trainings' : 'http://vivo.brown.edu/ontology/profile#hasTraining',
+    'specialty' : 'http://vivo.brown.edu/ontology/profile#hasSpecialty',
+    'hospital' : 'http://vivo.brown.edu/ontology/profile#hasHospital',
+    'organization' : 'http://vivo.brown.edu/ontology/profile#hasOrganization',
+    filters = []
+    if faculty:
+        filters.append(
+            make_filter('?link',
+                '<http://vivo.brown.edu/ontology/vivo-brown/drrbWebPageOf>',
+                '?fac',
+                '<{}>'.format(faculty) ) )
+    if link_text:
+        filters.append(
+            make_filter('?link',
+                '<http://vivoweb.org/ontology/core#linkAnchorText>',
+                '?link_text',
+                '{}'.format(json.dumps(link_text)) ) )
+    if link_address:
+        filters.append(
+            make_filter('?link',
+                '<http://vivoweb.org/ontology/core#linkURI>',
+                '?link_address',
+                '{}'.format(json.dumps(link_address)) ) )
+    if rank:
+        filters.append(
+            make_filter('?link',
+                '<http://vivoweb.org/ontology/core#rank>',
+                '?rank',
+                '{}'.format(json.dumps(rank)) ) )
+    if uris:
+        filters.append(
+            make_filter(None,None,'?link',''.join( ['<{}>'.format(u) for u in uris ]) ) )
+    query = """
+        PREFIX core: <http://vivoweb.org/ontology/core#>
+        DESCRIBE ?train
+        WHERE {{ ?link a core:URLLink . {0} {1} }}
+        """.format(''.join([ f['filter'] for f in filters if f.get('filter') ]),
+         ''.join([ f['values'] for f in filters if f.get('values') ]) )
+    remote = SPARQLWrapper.SPARQLWrapper(queryUrl, updateUrl)
+    remote.addParameter('email', user)
+    remote.addParameter('password', passw)
+    remote.setMethod(SPARQLWrapper.POST)
+    remote.setQuery( query )
+    results = remote.queryAndConvert()
+    resources = defaultdict(lambda: defaultdict(list))
+    for r in results.triples((None,None,None)):
+        resources[r[0].toPython()][r[1].toPython()].append(r[2].toPython())
+    out = []
+    for r in resources:
+        res = models.WebLink(uri=r)
+        res.load(resources[r])
+        out.append(res)
+    return out
+
+
 def query_faculty(shortId):
     uri = shortIdToUri(shortId)
     remote = SPARQLWrapper.SPARQLWrapper(queryUrl, updateUrl)
@@ -645,27 +702,87 @@ def update_weblink(shortId):
         return jsonify({'error': 'I\'m working on it!'})
 
 
-@app.route('/profile/<shortId>/faculty/edit/background/training/update')
-def profile_training(shortId):
-    training = property_map['trainings']
-    props = {
-        'rabid' : 'rabid',
-        property_map['specialty']: 'specialty',
-        property_map['hospital']: 'hospital',
-        property_map['organization']: 'organization',
-        property_map['city']: 'city',
-        property_map['state']: 'state',
-        property_map['country']: 'country',
-        property_map['start_date']: 'start',
-        property_map['end_date']: 'end',
-        property_map['label']: 'training'
-    }
-    data = query_training(shortId)
-    out = []
-    for d in data:
-        flt = { props[p]: d[p] for p in props if p in d }
-        out.append(flt)
-    return jsonify(out)
+@app.route('/profile/<shortId>/faculty/edit/background/training')
+def get_trainings(shortId):
+    uri = shortIdToUri(shortId)
+    data = query_trainings(faculty=uri)
+    return jsonify(
+        { 'training': [ {
+            'rabid': train.uri,
+            'specialty': train.specialty[0].name,
+            'hospital': train.hopsital[0].name,
+            'organization': train.organization[0].name,
+            'city': train.city[0],
+            'state': train.state[0],
+            'country': train.country[0],
+            'start': train.start[0],
+            'end': train.end[0] } for train in data ] })
+
+
+@app.route('/profile/<shortId>/faculty/edit/background/training/add',
+    methods=['POST'])
+def add_training(shortId):
+    data = request.get_json(force=True)
+    profile = query_faculty(shortId)
+    uri = mint_uri()
+    if not uri:
+        raise Exception('Failure to create new URI')
+    train = models.Training(uri)
+    train.update('link_text', [ data['text'] ])
+    train.update('link_address', [ data['url'] ])
+    train.update('rank', [ data['rank'] ])
+    train.update('faculty', [ profile.uri ] )
+    training_uris = { u for u in profile.trainings }
+    trainng_uris.add(train.uri)
+    profile.update('trainings', list(link_uris))
+    results = update_models([link, profile])
+    if '200' in results:
+        return jsonify({'rabid': link.uri })
+    else:
+        return jsonify({'error': 'I\'m working on it!'})
+
+
+@app.route('/profile/<shortId>/faculty/edit/background/training/delete',
+    methods=['POST'])
+def remove_training(shortId):
+    data = request.get_json(force=True)
+    uri = data['rabid']
+    profile = query_faculty(shortId)
+    if uri not in profile.web_links:
+        return jsonify({})
+    links = [ l for l in profile.web_links if l != uri ]
+    profile.update('web_links', links)
+    link = query_web_links(uris=[ uri ])[0]
+    link.update('link_text', [])
+    link.update('link_address', [])
+    link.update('rank', [])
+    link.update('faculty', [])
+    link.update('rdfType', [])
+    results = update_models([link, profile])
+    if '200' in results:
+        return jsonify({'deleted': data['rabid'] })
+    else:
+        return jsonify({'error': 'I\'m working on it!'})
+
+
+@app.route('/profile/<shortId>/faculty/edit/background/training/update',
+    methods=['POST'])
+def update_training(shortId):
+    data = request.get_json(force=True)
+    profile = query_faculty(shortId)
+    if data['rabid'] not in profile.web_links:
+        return jsonify({})
+    link = query_web_links(uris=[ data['rabid'] ])[0]
+    link.update('link_text', [ data['text'] ])
+    link.update('link_address', [ data['url'] ])
+    link.update('rank', [ data['rank'] ])
+    profile.update('last_updated', [ dt.now() ])
+    results = update_models([link,profile])
+    if '200' in results:
+        return jsonify( { 'rabid': link.uri, 'text': link.link_text[0],
+            'url': link.link_address[0], 'rank': link.rank[0] } )
+    else:
+        return jsonify({'error': 'I\'m working on it!'})
 
 
 @app.route('/profile/<shortId>/faculty/edit/background/honors',
